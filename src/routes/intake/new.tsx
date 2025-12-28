@@ -2,12 +2,12 @@ import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Card, CardContent } from "../../components/ui/card";
-import { ArrowLeft, Check, Search, UserCircle, Plus } from "lucide-react";
+import { ArrowLeft, Check, Search, UserCircle } from "lucide-react";
 import { useState, useMemo } from "react";
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useMutation } from "convex/react";
-import { api } from "../../convex/_generated/api";
+import { api } from "../../../convex/_generated/api";
 import { cn } from "../../lib/utils";
 
 export const Route = createFileRoute("/intake/new")({
