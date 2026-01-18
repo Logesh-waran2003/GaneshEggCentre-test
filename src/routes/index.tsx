@@ -25,6 +25,9 @@ function Home() {
   const { data: rates } = useSuspenseQuery(
     convexQuery(api.rates.getTodayRates, {})
   );
+  const { data: products } = useSuspenseQuery(
+    convexQuery(api.products.getProducts, {})
+  );
 
   return (
     <div className="p-4 safe-area-inset flex flex-col gap-6 max-w-md mx-auto">
@@ -100,19 +103,38 @@ function Home() {
             Update
           </Link>
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          {rates.map((rate: any) => (
-            <Card key={rate._id} className="bg-white border-gray-100 shadow-sm">
-              <CardContent className="p-4 flex flex-col items-center">
-                <span className="text-xs font-bold text-gray-400 uppercase tracking-tighter mb-1">
-                  {rate.eggType} Egg
-                </span>
-                <span className="text-2xl font-black text-indigo-950">
-                  ₹{rate.ratePerEgg}
-                </span>
-              </CardContent>
-            </Card>
-          ))}
+        <div className="grid grid-cols-1 gap-3">
+          {rates
+            .filter((rate: any) => rate.ratePerEgg > 0 || rate.ratePerTray > 0)
+            .map((rate: any) => {
+              const product = products.find((p) => p._id === rate.productId);
+              if (!product) return null;
+              return (
+                <Card key={rate._id} className="bg-white border-gray-100 shadow-sm">
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-bold text-gray-700">
+                        {product.name}
+                      </span>
+                      <div className="flex gap-4">
+                        <div className="text-right">
+                          <div className="text-xs text-gray-400">Per Egg</div>
+                          <div className="text-lg font-black text-indigo-950">
+                            ₹{rate.ratePerEgg}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-xs text-gray-400">Per Tray</div>
+                          <div className="text-lg font-black text-indigo-950">
+                            ₹{rate.ratePerTray}
+                          </div>
+                        </div>
+                      </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
           {rates.length === 0 && (
             <div className="col-span-2 text-center py-6 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
               <p className="text-gray-400 text-sm font-medium">
@@ -185,6 +207,34 @@ function Home() {
               <div className="flex items-center gap-3">
                 <Users className="size-5 text-blue-500" />
                 <span className="text-gray-800">Manage Contacts</span>
+              </div>
+              <ChevronRight className="size-5 text-gray-400" />
+            </Link>
+          </Button>
+          <Button
+            asChild
+            size="lg"
+            variant="outline"
+            className="w-full justify-between px-6 border-gray-100 shadow-sm hover:border-indigo-200"
+          >
+            <Link to="/inventory">
+              <div className="flex items-center gap-3">
+                <Package className="size-5 text-violet-500" />
+                <span className="text-gray-800">Inventory & Stock Check</span>
+              </div>
+              <ChevronRight className="size-5 text-gray-400" />
+            </Link>
+          </Button>
+          <Button
+            asChild
+            size="lg"
+            variant="outline"
+            className="w-full justify-between px-6 border-gray-100 shadow-sm hover:border-indigo-200"
+          >
+            <Link to="/products">
+              <div className="flex items-center gap-3">
+                <Package className="size-5 text-amber-500" />
+                <span className="text-gray-800">Manage Products</span>
               </div>
               <ChevronRight className="size-5 text-gray-400" />
             </Link>

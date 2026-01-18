@@ -36,6 +36,7 @@ function Ledger() {
   const [paymentMode, setPaymentMode] = useState<"Cash" | "UPI" | "Check">(
     "Cash"
   );
+  const [remarks, setRemarks] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const sortedContacts = contacts
@@ -50,13 +51,14 @@ function Ledger() {
     try {
       await createTransaction({
         contactId: selectedContact._id,
-        type: "PAYMENT_IN", // Assuming "in" for this context, as original was "PAYMENT_IN"
-        amount: parseFloat(paymentAmount), // Using paymentAmount as per original code
+        type: "PAYMENT_IN",
+        amount: parseFloat(paymentAmount),
         date: Date.now(),
-        description: `Payment recorded via ledger`,
+        description: remarks || `${paymentMode} payment received`,
       });
       setSelectedContact(null);
       setPaymentAmount("");
+      setRemarks("");
     } catch (err) {
       console.error(err);
       alert("Failed to record payment");
@@ -273,6 +275,19 @@ function Ledger() {
                       </button>
                     ))}
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-widest block ml-1">
+                    Remarks (Optional)
+                  </label>
+                  <Input
+                    type="text"
+                    value={remarks}
+                    onChange={(e) => setRemarks(e.target.value)}
+                    className="h-12 bg-gray-50 border-none rounded-2xl"
+                    placeholder="Add notes..."
+                  />
                 </div>
 
                 <div className="pt-4">

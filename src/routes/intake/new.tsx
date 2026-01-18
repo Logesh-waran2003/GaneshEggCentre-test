@@ -50,7 +50,7 @@ function NewIntake() {
   };
 
   const totalAmount = items.reduce((acc, item) => {
-    const totalEggs = item.qtyTrays * 30 + item.qtyLoose;
+    const totalEggs = item.qtyTrays * item.product.eggsPerTray + item.qtyLoose;
     return acc + totalEggs * item.rateApplied;
   }, 0);
 

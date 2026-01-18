@@ -12,14 +12,16 @@ export default defineSchema({
 
   products: defineTable({
     name: v.string(),
+    eggsPerTray: v.number(),
     currentStockQtyTrays: v.number(),
     currentStockQtyLoose: v.number(),
   }),
 
   dailyBoardRates: defineTable({
-    date: v.number(), // timestamp
-    eggType: v.string(),
+    date: v.number(),
+    productId: v.id("products"),
     ratePerEgg: v.number(),
+    ratePerTray: v.number(),
   }).index("by_date", ["date"]),
 
   transactions: defineTable({
@@ -31,8 +33,10 @@ export default defineSchema({
       v.literal("PAYMENT_OUT")
     ),
     amount: v.number(),
-    date: v.number(), // timestamp
+    date: v.number(),
     description: v.optional(v.string()),
+    cashCollected: v.optional(v.number()),
+    relatedTransactionId: v.optional(v.id("transactions")),
   }).index("by_contactId", ["contactId"]),
 
   transactionItems: defineTable({
@@ -43,4 +47,17 @@ export default defineSchema({
     rateApplied: v.number(),
     breakageQty: v.number(),
   }).index("by_transactionId", ["transactionId"]),
+
+  stockChecks: defineTable({
+    date: v.number(),
+    type: v.union(v.literal("MORNING"), v.literal("EVENING")),
+    productId: v.id("products"),
+    systemQtyTrays: v.number(),
+    systemQtyLoose: v.number(),
+    physicalQtyTrays: v.number(),
+    physicalQtyLoose: v.number(),
+    varianceTrays: v.number(),
+    varianceLoose: v.number(),
+    remarks: v.optional(v.string()),
+  }).index("by_date", ["date"]),
 });

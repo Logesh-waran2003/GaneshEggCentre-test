@@ -11,7 +11,9 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SetupRouteImport } from './routes/setup'
 import { Route as SalesRouteImport } from './routes/sales'
+import { Route as ProductsRouteImport } from './routes/products'
 import { Route as LedgerRouteImport } from './routes/ledger'
+import { Route as InventoryRouteImport } from './routes/inventory'
 import { Route as IntakeRouteImport } from './routes/intake'
 import { Route as ContactsRouteImport } from './routes/contacts'
 import { Route as IndexRouteImport } from './routes/index'
@@ -30,9 +32,19 @@ const SalesRoute = SalesRouteImport.update({
   path: '/sales',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProductsRoute = ProductsRouteImport.update({
+  id: '/products',
+  path: '/products',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LedgerRoute = LedgerRouteImport.update({
   id: '/ledger',
   path: '/ledger',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InventoryRoute = InventoryRouteImport.update({
+  id: '/inventory',
+  path: '/inventory',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IntakeRoute = IntakeRouteImport.update({
@@ -75,7 +87,9 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/contacts': typeof ContactsRouteWithChildren
   '/intake': typeof IntakeRouteWithChildren
+  '/inventory': typeof InventoryRoute
   '/ledger': typeof LedgerRoute
+  '/products': typeof ProductsRoute
   '/sales': typeof SalesRouteWithChildren
   '/setup': typeof SetupRoute
   '/contacts/$contactId': typeof ContactsContactIdRoute
@@ -86,7 +100,9 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/intake': typeof IntakeRouteWithChildren
+  '/inventory': typeof InventoryRoute
   '/ledger': typeof LedgerRoute
+  '/products': typeof ProductsRoute
   '/sales': typeof SalesRouteWithChildren
   '/setup': typeof SetupRoute
   '/contacts/$contactId': typeof ContactsContactIdRoute
@@ -99,7 +115,9 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/contacts': typeof ContactsRouteWithChildren
   '/intake': typeof IntakeRouteWithChildren
+  '/inventory': typeof InventoryRoute
   '/ledger': typeof LedgerRoute
+  '/products': typeof ProductsRoute
   '/sales': typeof SalesRouteWithChildren
   '/setup': typeof SetupRoute
   '/contacts/$contactId': typeof ContactsContactIdRoute
@@ -113,7 +131,9 @@ export interface FileRouteTypes {
     | '/'
     | '/contacts'
     | '/intake'
+    | '/inventory'
     | '/ledger'
+    | '/products'
     | '/sales'
     | '/setup'
     | '/contacts/$contactId'
@@ -124,7 +144,9 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/intake'
+    | '/inventory'
     | '/ledger'
+    | '/products'
     | '/sales'
     | '/setup'
     | '/contacts/$contactId'
@@ -136,7 +158,9 @@ export interface FileRouteTypes {
     | '/'
     | '/contacts'
     | '/intake'
+    | '/inventory'
     | '/ledger'
+    | '/products'
     | '/sales'
     | '/setup'
     | '/contacts/$contactId'
@@ -149,7 +173,9 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ContactsRoute: typeof ContactsRouteWithChildren
   IntakeRoute: typeof IntakeRouteWithChildren
+  InventoryRoute: typeof InventoryRoute
   LedgerRoute: typeof LedgerRoute
+  ProductsRoute: typeof ProductsRoute
   SalesRoute: typeof SalesRouteWithChildren
   SetupRoute: typeof SetupRoute
 }
@@ -170,11 +196,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SalesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/products': {
+      id: '/products'
+      path: '/products'
+      fullPath: '/products'
+      preLoaderRoute: typeof ProductsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/ledger': {
       id: '/ledger'
       path: '/ledger'
       fullPath: '/ledger'
       preLoaderRoute: typeof LedgerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/inventory': {
+      id: '/inventory'
+      path: '/inventory'
+      fullPath: '/inventory'
+      preLoaderRoute: typeof InventoryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/intake': {
@@ -268,7 +308,9 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ContactsRoute: ContactsRouteWithChildren,
   IntakeRoute: IntakeRouteWithChildren,
+  InventoryRoute: InventoryRoute,
   LedgerRoute: LedgerRoute,
+  ProductsRoute: ProductsRoute,
   SalesRoute: SalesRouteWithChildren,
   SetupRoute: SetupRoute,
 }

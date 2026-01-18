@@ -30,6 +30,13 @@ function NewSale() {
   const [selectedContact, setSelectedContact] = useState<any>(null);
   const [search, setSearch] = useState("");
   const [items, setItems] = useState<any[]>([]);
+  const [remarks, setRemarks] = useState("");
+  const [cashCollectedEnabled, setCashCollectedEnabled] = useState(false);
+  const [cashCollected, setCashCollected] = useState("");
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [confirmationMessage, setConfirmationMessage] = useState("");
+  const [showError, setShowError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const filteredContacts = useMemo(
@@ -41,13 +48,12 @@ function NewSale() {
   );
 
   const addItem = (product: any) => {
-    const boardRate =
-      rates.find((r: any) => product.name.includes(r.eggType))?.ratePerEgg ||
-      rates[0]?.ratePerEgg ||
-      0;
-
+    const productRate = rates.find((r: any) => r.productId === product._id);
+    
+    const ratePerEgg = productRate?.ratePerEgg || 0;
+    const ratePerTray = productRate?.ratePerTray || 0;
+    
     const adjustment = selectedContact?.priceAdjustment || 0;
-    const finalRate = boardRate + adjustment;
 
     setItems([
       ...items,
@@ -55,7 +61,8 @@ function NewSale() {
         product,
         qtyTrays: 0,
         qtyLoose: 0,
-        rateApplied: finalRate,
+        ratePerEgg: ratePerEgg + adjustment,
+        ratePerTray: ratePerTray + adjustment * product.eggsPerTray,
         breakage: 0,
       },
     ]);
@@ -68,20 +75,44 @@ function NewSale() {
   };
 
   const totalAmount = items.reduce((acc, item) => {
-    const totalEggs = item.qtyTrays * 30 + item.qtyLoose;
-    return acc + totalEggs * item.rateApplied;
+    const trayAmount = item.qtyTrays * item.ratePerTray;
+    const looseAmount = item.qtyLoose * item.ratePerEgg;
+    return acc + trayAmount + looseAmount;
   }, 0);
 
   const handleSave = async () => {
     if (!selectedContact) {
-      alert("Please select a customer");
+      setErrorMessage("Please select a customer");
+      setShowError(true);
       return;
     }
     if (items.length === 0) {
-      alert("Please add at least one item");
+      setErrorMessage("Please add at least one item");
+      setShowError(true);
       return;
     }
 
+    const cashAmount = cashCollectedEnabled ? Number(cashCollected) || 0 : 0;
+    const creditAmount = totalAmount - cashAmount;
+
+    // Show confirmation for credit or overpayment
+    if (creditAmount > 0) {
+      setConfirmationMessage(`Mark ₹${creditAmount.toLocaleString()} as credit?`);
+      setShowConfirmation(true);
+      return;
+    } else if (creditAmount < 0) {
+      setConfirmationMessage(`Customer paid ₹${Math.abs(creditAmount).toLocaleString()} extra. This will be added to their credit balance. Continue?`);
+      setShowConfirmation(true);
+      return;
+    }
+
+    // If no credit/overpayment, proceed directly
+    await submitSale();
+  };
+
+  const submitSale = async () => {
+    const cashAmount = cashCollectedEnabled ? Number(cashCollected) || 0 : 0;
+    
     setIsSubmitting(true);
     try {
       await createTransaction({
@@ -89,20 +120,28 @@ function NewSale() {
         type: "SALE",
         amount: totalAmount,
         date: Date.now(),
+        description: remarks || undefined,
+        cashCollected: cashAmount > 0 ? cashAmount : undefined,
         items: items.map((item) => ({
           productId: item.product._id,
-          qtyTrays: Number(item.qtyTrays),
-          qtyLoose: Number(item.qtyLoose),
-          rateApplied: Number(item.rateApplied),
-          breakageQty: Number(item.breakage),
+          qtyTrays: Number(item.qtyTrays) || 0,
+          qtyLoose: Number(item.qtyLoose) || 0,
+          rateApplied: Number(item.ratePerEgg) || 0,
+          breakageQty: Number(item.breakage) || 0,
         })),
       });
       router.navigate({ to: "/" });
     } catch (err) {
-      console.error(err);
-      alert("Failed to record sale");
+      console.error("Transaction error:", err);
+      const errorMsg = (err as Error).message;
+      // Extract the actual error from Convex error format
+      const match = errorMsg.match(/Uncaught Error: (.+?)(?:\n|$)/);
+      const displayError = match ? match[1] : errorMsg;
+      setErrorMessage(displayError);
+      setShowError(true);
     } finally {
       setIsSubmitting(false);
+      setShowConfirmation(false);
     }
   };
 
@@ -211,10 +250,13 @@ function NewSale() {
             >
               <CardContent className="p-5">
                 <div className="flex justify-between items-start mb-4">
-                  <div>
+                  <div className="flex-1">
                     <h3 className="text-indigo-950 font-black text-xl uppercase tracking-tighter">
                       {item.product.name} Egg
                     </h3>
+                    <p className="text-xs text-gray-500 font-medium mt-1">
+                      Stock: {item.product.currentStockQtyTrays} trays, {item.product.currentStockQtyLoose} loose
+                    </p>
                   </div>
                   <Button
                     variant="ghost"
@@ -260,21 +302,38 @@ function NewSale() {
                 <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-gray-50">
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">
-                      Rate (Per Egg)
+                      Rate Per Tray
                     </label>
                     <Input
                       type="number"
                       step="0.01"
-                      value={item.rateApplied}
+                      value={item.ratePerTray}
                       onChange={(e) =>
-                        updateItem(idx, "rateApplied", e.target.value)
+                        updateItem(idx, "ratePerTray", e.target.value)
                       }
                       className="h-12 bg-gray-50 border-none font-bold text-indigo-600"
                     />
                   </div>
                   <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">
+                      Rate Per Egg
+                    </label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={item.ratePerEgg}
+                      onChange={(e) =>
+                        updateItem(idx, "ratePerEgg", e.target.value)
+                      }
+                      className="h-12 bg-gray-50 border-none font-bold text-indigo-600"
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-4 pt-4 border-t border-gray-50">
+                  <div className="space-y-1">
                     <label className="text-[10px] font-bold text-red-400 uppercase tracking-widest ml-1">
-                      Breakage
+                      Breakage (Loose Eggs)
                     </label>
                     <Input
                       type="number"
@@ -302,24 +361,81 @@ function NewSale() {
 
         {/* Summary */}
         {items.length > 0 && (
-          <section className="mt-8 p-6 bg-indigo-50/50 rounded-3xl border border-indigo-100 flex justify-between items-center">
-            <div>
-              <p className="text-xs font-bold text-indigo-400 uppercase tracking-widest">
-                Total Amount
-              </p>
-              <p className="text-3xl font-black text-indigo-950">
-                ₹{totalAmount.toLocaleString()}
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="text-xs font-bold text-emerald-500 uppercase tracking-widest">
-                Status
-              </p>
-              <p className="text-sm font-bold text-gray-600">
-                Credit Ledger Update
-              </p>
-            </div>
-          </section>
+          <>
+            {/* Remarks */}
+            <section className="mt-6">
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block ml-1">
+                Remarks (Optional)
+              </label>
+              <Input
+                placeholder="Add notes about this sale..."
+                value={remarks}
+                onChange={(e) => setRemarks(e.target.value)}
+                className="bg-white border-gray-200 h-12"
+              />
+            </section>
+
+            {/* Cash Collected */}
+            <section className="mt-6">
+              <label className="flex items-center gap-2 mb-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={cashCollectedEnabled}
+                  onChange={(e) => {
+                    setCashCollectedEnabled(e.target.checked);
+                    if (e.target.checked) {
+                      setCashCollected(totalAmount.toString());
+                    }
+                  }}
+                  className="size-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                />
+                <span className="text-sm font-bold text-gray-700">
+                  Cash Collected
+                </span>
+              </label>
+              {cashCollectedEnabled && (
+                <div className="space-y-2">
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={cashCollected}
+                    onChange={(e) => setCashCollected(e.target.value)}
+                    onFocus={(e) => e.target.addEventListener('wheel', (evt) => evt.preventDefault(), { passive: false })}
+                    className="bg-white border-gray-200 h-14 text-lg font-bold"
+                    placeholder="0"
+                  />
+                  {Number(cashCollected) < totalAmount && (
+                    <p className="text-sm text-amber-600 font-medium ml-1">
+                      Credit: ₹
+                      {(totalAmount - Number(cashCollected)).toLocaleString()}
+                    </p>
+                  )}
+                </div>
+              )}
+            </section>
+
+            <section className="mt-6 p-6 bg-indigo-50/50 rounded-3xl border border-indigo-100 flex justify-between items-center">
+              <div>
+                <p className="text-xs font-bold text-indigo-400 uppercase tracking-widest">
+                  Total Amount
+                </p>
+                <p className="text-3xl font-black text-indigo-950">
+                  ₹{totalAmount.toLocaleString()}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs font-bold text-emerald-500 uppercase tracking-widest">
+                  Status
+                </p>
+                <p className="text-sm font-bold text-gray-600">
+                  {cashCollectedEnabled && Number(cashCollected) >= totalAmount
+                    ? "Paid"
+                    : "Credit"}
+                </p>
+              </div>
+            </section>
+          </>
         )}
       </div>
 
@@ -343,6 +459,50 @@ function NewSale() {
           </Button>
         </div>
       </footer>
+
+      {/* Confirmation Modal */}
+      {showConfirmation && (
+        <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl">
+            <h3 className="text-xl font-bold text-gray-900 mb-3">Confirm Sale</h3>
+            <p className="text-gray-600 mb-6">{confirmationMessage}</p>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setShowConfirmation(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="premium"
+                className="flex-1"
+                onClick={submitSale}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Processing..." : "Confirm"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Error Modal */}
+      {showError && (
+        <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl">
+            <h3 className="text-xl font-bold text-red-600 mb-3">Error</h3>
+            <p className="text-gray-700 mb-6">{errorMessage}</p>
+            <Button
+              variant="premium"
+              className="w-full"
+              onClick={() => setShowError(false)}
+            >
+              OK
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

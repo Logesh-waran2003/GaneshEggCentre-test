@@ -13,6 +13,7 @@ export const createTransaction = mutation({
     amount: v.number(),
     date: v.number(),
     description: v.optional(v.string()),
+    cashCollected: v.optional(v.number()),
     items: v.optional(
       v.array(
         v.object({
@@ -26,17 +27,65 @@ export const createTransaction = mutation({
     ),
   },
   handler: async (ctx, args) => {
-    // 1. Create Transaction
+    console.log("createTransaction called with:", {
+      type: args.type,
+      amount: args.amount,
+      cashCollected: args.cashCollected,
+    });
+
+    // 1. Create Sale Transaction
     const transactionId = await ctx.db.insert("transactions", {
       contactId: args.contactId,
       type: args.type,
       amount: args.amount,
       date: args.date,
       description: args.description,
+      cashCollected: args.cashCollected,
     });
+    console.log("Created transaction:", transactionId);
 
-    // 2. Handle Items and Stock
+    // 2. If cash collected, create separate PAYMENT_IN transaction
+    if (args.type === "SALE" && args.cashCollected && args.cashCollected > 0) {
+      console.log("Creating PAYMENT_IN for cash:", args.cashCollected);
+      const paymentId = await ctx.db.insert("transactions", {
+        contactId: args.contactId,
+        type: "PAYMENT_IN",
+        amount: args.cashCollected,
+        date: args.date,
+        description: `Cash collected for sale`,
+        relatedTransactionId: transactionId,
+      });
+      console.log("Created PAYMENT_IN transaction:", paymentId);
+    }
+
+    // 3. Handle Items and Stock
     if (args.items) {
+      // First validate stock for SALE transactions
+      if (args.type === "SALE") {
+        for (const item of args.items) {
+          const product = await ctx.db.get(item.productId);
+          if (!product) {
+            throw new Error(`Product not found: ${item.productId}`);
+          }
+          
+          const availableTrays = product.currentStockQtyTrays;
+          const availableLoose = product.currentStockQtyLoose;
+          
+          if (item.qtyTrays > availableTrays) {
+            throw new Error(
+              `Insufficient stock for ${product.name}: Need ${item.qtyTrays} trays, only ${availableTrays} available`
+            );
+          }
+          
+          if (item.qtyLoose > availableLoose) {
+            throw new Error(
+              `Insufficient stock for ${product.name}: Need ${item.qtyLoose} loose eggs, only ${availableLoose} available`
+            );
+          }
+        }
+      }
+
+      // Now process items and update stock
       for (const item of args.items) {
         await ctx.db.insert("transactionItems", {
           transactionId,
@@ -67,14 +116,24 @@ export const createTransaction = mutation({
       }
     }
 
-    // 3. Update Contact Balance
+    // 4. Update Contact Balance
     const contact = await ctx.db.get(args.contactId);
     if (contact) {
       let balanceChange = 0;
-      if (args.type === "SALE") balanceChange = args.amount;
-      else if (args.type === "PURCHASE") balanceChange = -args.amount;
-      else if (args.type === "PAYMENT_IN") balanceChange = -args.amount;
-      else if (args.type === "PAYMENT_OUT") balanceChange = args.amount;
+      
+      if (args.type === "SALE") {
+        // For sales: only add credit amount (total - cash collected)
+        const creditAmount = args.cashCollected 
+          ? args.amount - args.cashCollected 
+          : args.amount;
+        balanceChange = creditAmount;
+      } else if (args.type === "PURCHASE") {
+        balanceChange = -args.amount;
+      } else if (args.type === "PAYMENT_IN") {
+        balanceChange = -args.amount;
+      } else if (args.type === "PAYMENT_OUT") {
+        balanceChange = args.amount;
+      }
 
       await ctx.db.patch(args.contactId, {
         currentBalance: (contact.currentBalance ?? 0) + balanceChange,

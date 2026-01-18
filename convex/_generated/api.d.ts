@@ -9,6 +9,7 @@
  */
 
 import type * as contacts from "../contacts.js";
+import type * as inventory from "../inventory.js";
 import type * as products from "../products.js";
 import type * as rates from "../rates.js";
 import type * as seed from "../seed.js";
@@ -22,6 +23,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   contacts: typeof contacts;
+  inventory: typeof inventory;
   products: typeof products;
   rates: typeof rates;
   seed: typeof seed;
