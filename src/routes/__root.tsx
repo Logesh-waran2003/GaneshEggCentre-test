@@ -1,8 +1,8 @@
 import {
   HeadContent,
-  Outlet,
   Scripts,
   createRootRouteWithContext,
+  Link,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { TanStackDevtools } from "@tanstack/react-devtools";
@@ -36,6 +36,25 @@ export const Route = createRootRouteWithContext<{
       },
     ],
   }),
+  notFoundComponent: () => (
+    <div className="p-4 safe-area-inset flex flex-col items-center justify-center min-h-[100dvh] max-w-md mx-auto text-center">
+      <div className="bg-indigo-100 p-6 rounded-3xl mb-6">
+        <div className="text-6xl mb-4">🥚</div>
+        <h1 className="text-2xl font-bold text-indigo-950 mb-2">
+          Page Not Found
+        </h1>
+        <p className="text-gray-600 mb-6">
+          The page you're looking for doesn't exist.
+        </p>
+        <Link
+          to="/"
+          className="inline-flex items-center justify-center px-6 py-3 bg-gradient-to-br from-indigo-600 to-violet-600 text-white rounded-xl font-medium hover:scale-105 transition-transform"
+        >
+          Go Home
+        </Link>
+      </div>
+    </div>
+  ),
   shellComponent: RootDocument,
 });
 

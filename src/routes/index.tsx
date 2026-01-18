@@ -102,7 +102,7 @@ function Home() {
         </div>
         <div className="grid grid-cols-2 gap-3">
           {rates.map((rate: any) => (
-            <Card key={rate.id} className="bg-white border-gray-100 shadow-sm">
+            <Card key={rate._id} className="bg-white border-gray-100 shadow-sm">
               <CardContent className="p-4 flex flex-col items-center">
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-tighter mb-1">
                   {rate.eggType} Egg
