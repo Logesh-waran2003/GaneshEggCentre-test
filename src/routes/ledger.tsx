@@ -17,8 +17,10 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { cn } from "../lib/utils";
+import { requireAuth } from "../lib/auth";
 
 export const Route = createFileRoute("/ledger")({
+  beforeLoad: requireAuth,
   component: Ledger,
 });
 

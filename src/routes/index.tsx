@@ -1,21 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Card, CardContent } from "../components/ui/card";
 import { EggLoader } from "../components/ui/EggLoader";
-import { Button } from "../components/ui/button";
-import {
-  TrendingUp,
-  ShoppingCart,
-  Wallet,
-  PlusCircle,
-  Users,
-  Package,
-  ChevronRight,
-} from "lucide-react";
+
+import { TrendingUp, ShoppingCart, Package } from "lucide-react";
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { api } from "../../convex/_generated/api";
+import { requireAuth } from "../lib/auth";
 
 export const Route = createFileRoute("/")({
+  beforeLoad: requireAuth,
   component: Home,
   pendingComponent: () => (
     <div className="h-full min-h-[50vh] flex items-center justify-center safe-area-inset">
@@ -157,97 +151,6 @@ function Home() {
               </Link>
             </div>
           )}
-        </div>
-      </section>
-
-      {/* Quick Actions - Thumb Zone */}
-      <section className="flex flex-col gap-3">
-        <h2 className="text-lg font-bold text-gray-800">Quick Actions</h2>
-        <div className="grid grid-cols-2 gap-3">
-          <Button
-            asChild
-            size="xl"
-            variant="premium"
-            className="h-32 flex-col gap-2 shadow-indigo-100"
-          >
-            <Link to="/sales/new">
-              <div className="bg-white/20 p-2 rounded-xl mb-1">
-                <ShoppingCart className="size-6" />
-              </div>
-              <span>New Sale</span>
-            </Link>
-          </Button>
-          <Button
-            asChild
-            size="xl"
-            variant="outline"
-            className="h-32 flex-col gap-2 border-2 text-indigo-950 hover:bg-indigo-50 border-indigo-50"
-          >
-            <Link to="/intake/new">
-              <div className="bg-indigo-50 p-2 rounded-xl mb-1">
-                <PlusCircle className="size-6 text-indigo-600" />
-              </div>
-              <span>Add Intake</span>
-            </Link>
-          </Button>
-        </div>
-        <div className="grid grid-cols-1 gap-3 mt-1">
-          <Button
-            asChild
-            size="lg"
-            variant="outline"
-            className="w-full justify-between px-6 border-gray-100 shadow-sm hover:border-indigo-200"
-          >
-            <Link to="/ledger">
-              <div className="flex items-center gap-3">
-                <Wallet className="size-5 text-emerald-500" />
-                <span className="text-gray-800">Customer Ledgers (Khata)</span>
-              </div>
-              <ChevronRight className="size-5 text-gray-400" />
-            </Link>
-          </Button>
-          <Button
-            asChild
-            size="lg"
-            variant="outline"
-            className="w-full justify-between px-6 border-gray-100 shadow-sm hover:border-indigo-200"
-          >
-            <Link to="/contacts">
-              <div className="flex items-center gap-3">
-                <Users className="size-5 text-blue-500" />
-                <span className="text-gray-800">Manage Contacts</span>
-              </div>
-              <ChevronRight className="size-5 text-gray-400" />
-            </Link>
-          </Button>
-          <Button
-            asChild
-            size="lg"
-            variant="outline"
-            className="w-full justify-between px-6 border-gray-100 shadow-sm hover:border-indigo-200"
-          >
-            <Link to="/inventory">
-              <div className="flex items-center gap-3">
-                <Package className="size-5 text-violet-500" />
-                <span className="text-gray-800">Inventory & Stock Check</span>
-              </div>
-              <ChevronRight className="size-5 text-gray-400" />
-            </Link>
-          </Button>
-          <Button
-            asChild
-            size="lg"
-            variant="outline"
-            className="w-full justify-between px-6 border-gray-100 shadow-sm hover:border-indigo-200"
-          >
-            <Link to="/products">
-              <div className="flex items-center gap-3">
-                <Package className="size-5 text-amber-500" />
-                <span className="text-gray-800">Manage Products</span>
-              </div>
-              <ChevronRight className="size-5 text-gray-400" />
-            </Link>
-          </Button>
         </div>
       </section>
 

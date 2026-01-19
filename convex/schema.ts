@@ -24,6 +24,21 @@ export default defineSchema({
     ratePerTray: v.number(),
   }).index("by_date", ["date"]),
 
+  users: defineTable({
+    username: v.string(),
+    passwordHash: v.string(),
+    name: v.string(),
+    role: v.union(v.literal("ADMIN"), v.literal("EMPLOYEE")),
+    isActive: v.boolean(),
+    createdAt: v.number(),
+  }).index("by_username", ["username"]),
+
+  sessions: defineTable({
+    userId: v.id("users"),
+    token: v.string(),
+    expiresAt: v.number(),
+  }).index("by_token", ["token"]),
+
   transactions: defineTable({
     contactId: v.id("contacts"),
     type: v.union(
@@ -37,6 +52,7 @@ export default defineSchema({
     description: v.optional(v.string()),
     cashCollected: v.optional(v.number()),
     relatedTransactionId: v.optional(v.id("transactions")),
+    createdBy: v.optional(v.id("users")),
   }).index("by_contactId", ["contactId"]),
 
   transactionItems: defineTable({

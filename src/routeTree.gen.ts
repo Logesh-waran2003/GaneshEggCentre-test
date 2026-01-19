@@ -9,9 +9,12 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as UsersRouteImport } from './routes/users'
 import { Route as SetupRouteImport } from './routes/setup'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SalesRouteImport } from './routes/sales'
 import { Route as ProductsRouteImport } from './routes/products'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as LedgerRouteImport } from './routes/ledger'
 import { Route as InventoryRouteImport } from './routes/inventory'
 import { Route as IntakeRouteImport } from './routes/intake'
@@ -22,9 +25,19 @@ import { Route as SalesNewRouteImport } from './routes/sales/new'
 import { Route as IntakeNewRouteImport } from './routes/intake/new'
 import { Route as ContactsContactIdRouteImport } from './routes/contacts.$contactId'
 
+const UsersRoute = UsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SetupRoute = SetupRouteImport.update({
   id: '/setup',
   path: '/setup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SalesRoute = SalesRouteImport.update({
@@ -35,6 +48,11 @@ const SalesRoute = SalesRouteImport.update({
 const ProductsRoute = ProductsRouteImport.update({
   id: '/products',
   path: '/products',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LedgerRoute = LedgerRouteImport.update({
@@ -89,9 +107,12 @@ export interface FileRoutesByFullPath {
   '/intake': typeof IntakeRouteWithChildren
   '/inventory': typeof InventoryRoute
   '/ledger': typeof LedgerRoute
+  '/login': typeof LoginRoute
   '/products': typeof ProductsRoute
   '/sales': typeof SalesRouteWithChildren
+  '/settings': typeof SettingsRoute
   '/setup': typeof SetupRoute
+  '/users': typeof UsersRoute
   '/contacts/$contactId': typeof ContactsContactIdRoute
   '/intake/new': typeof IntakeNewRoute
   '/sales/new': typeof SalesNewRoute
@@ -102,9 +123,12 @@ export interface FileRoutesByTo {
   '/intake': typeof IntakeRouteWithChildren
   '/inventory': typeof InventoryRoute
   '/ledger': typeof LedgerRoute
+  '/login': typeof LoginRoute
   '/products': typeof ProductsRoute
   '/sales': typeof SalesRouteWithChildren
+  '/settings': typeof SettingsRoute
   '/setup': typeof SetupRoute
+  '/users': typeof UsersRoute
   '/contacts/$contactId': typeof ContactsContactIdRoute
   '/intake/new': typeof IntakeNewRoute
   '/sales/new': typeof SalesNewRoute
@@ -117,9 +141,12 @@ export interface FileRoutesById {
   '/intake': typeof IntakeRouteWithChildren
   '/inventory': typeof InventoryRoute
   '/ledger': typeof LedgerRoute
+  '/login': typeof LoginRoute
   '/products': typeof ProductsRoute
   '/sales': typeof SalesRouteWithChildren
+  '/settings': typeof SettingsRoute
   '/setup': typeof SetupRoute
+  '/users': typeof UsersRoute
   '/contacts/$contactId': typeof ContactsContactIdRoute
   '/intake/new': typeof IntakeNewRoute
   '/sales/new': typeof SalesNewRoute
@@ -133,9 +160,12 @@ export interface FileRouteTypes {
     | '/intake'
     | '/inventory'
     | '/ledger'
+    | '/login'
     | '/products'
     | '/sales'
+    | '/settings'
     | '/setup'
+    | '/users'
     | '/contacts/$contactId'
     | '/intake/new'
     | '/sales/new'
@@ -146,9 +176,12 @@ export interface FileRouteTypes {
     | '/intake'
     | '/inventory'
     | '/ledger'
+    | '/login'
     | '/products'
     | '/sales'
+    | '/settings'
     | '/setup'
+    | '/users'
     | '/contacts/$contactId'
     | '/intake/new'
     | '/sales/new'
@@ -160,9 +193,12 @@ export interface FileRouteTypes {
     | '/intake'
     | '/inventory'
     | '/ledger'
+    | '/login'
     | '/products'
     | '/sales'
+    | '/settings'
     | '/setup'
+    | '/users'
     | '/contacts/$contactId'
     | '/intake/new'
     | '/sales/new'
@@ -175,18 +211,35 @@ export interface RootRouteChildren {
   IntakeRoute: typeof IntakeRouteWithChildren
   InventoryRoute: typeof InventoryRoute
   LedgerRoute: typeof LedgerRoute
+  LoginRoute: typeof LoginRoute
   ProductsRoute: typeof ProductsRoute
   SalesRoute: typeof SalesRouteWithChildren
+  SettingsRoute: typeof SettingsRoute
   SetupRoute: typeof SetupRoute
+  UsersRoute: typeof UsersRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/users': {
+      id: '/users'
+      path: '/users'
+      fullPath: '/users'
+      preLoaderRoute: typeof UsersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/setup': {
       id: '/setup'
       path: '/setup'
       fullPath: '/setup'
       preLoaderRoute: typeof SetupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sales': {
@@ -201,6 +254,13 @@ declare module '@tanstack/react-router' {
       path: '/products'
       fullPath: '/products'
       preLoaderRoute: typeof ProductsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/ledger': {
@@ -310,9 +370,12 @@ const rootRouteChildren: RootRouteChildren = {
   IntakeRoute: IntakeRouteWithChildren,
   InventoryRoute: InventoryRoute,
   LedgerRoute: LedgerRoute,
+  LoginRoute: LoginRoute,
   ProductsRoute: ProductsRoute,
   SalesRoute: SalesRouteWithChildren,
+  SettingsRoute: SettingsRoute,
   SetupRoute: SetupRoute,
+  UsersRoute: UsersRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

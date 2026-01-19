@@ -1,7 +1,7 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { Workbox } from "workbox-window";
-import { Home, Wallet, Package, Users, PlusCircle } from "lucide-react";
+import { Home, Wallet, PlusCircle, Settings } from "lucide-react";
 import { cn } from "../../lib/utils";
 
 interface MobileAppShellProps {
@@ -24,8 +24,6 @@ export function MobileAppShell({ children }: MobileAppShellProps) {
       <main className="flex-1 overflow-y-auto overflow-x-hidden pb-24 safe-area-inset">
         {children}
       </main>
-
-      {/* Cloud/Sync Status Indicator - Could be added here later */}
 
       {/* Bottom Navigation */}
       <BottomNavigation />
@@ -58,16 +56,10 @@ function BottomNavigation() {
       highlight: true,
     },
     {
-      label: "Stock",
-      href: "/inventory",
-      icon: Package,
-      match: (path: string) => path.startsWith("/inventory"),
-    },
-    {
-      label: "Contacts",
-      href: "/contacts",
-      icon: Users,
-      match: (path: string) => path.startsWith("/contacts"),
+      label: "Settings",
+      href: "/settings",
+      icon: Settings,
+      match: (path: string) => path.startsWith("/settings"),
     },
   ];
 

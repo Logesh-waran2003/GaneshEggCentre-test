@@ -10,8 +10,10 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Card, CardContent } from "../components/ui/card";
 import type { Id } from "../../convex/_generated/dataModel";
+import { requireAuth } from "../lib/auth";
 
 export const Route = createFileRoute("/inventory")({
+  beforeLoad: requireAuth,
   component: Inventory,
 });
 
