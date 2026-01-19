@@ -25,6 +25,9 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overscroll-behavior-y: none; /* Prevent bounce on mobile */
+  -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
+  user-select: none; /* Prevent text selection by default for app-like feel */
+  -webkit-user-select: none;
 }
 
 /* Custom scrollbar for premium feel */

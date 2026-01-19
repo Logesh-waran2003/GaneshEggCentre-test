@@ -32,12 +32,12 @@ function ContactDetail() {
   const { data: contact } = useSuspenseQuery(
     convexQuery(api.contacts.getContactById, {
       id: contactId as Id<"contacts">,
-    })
+    }),
   );
   const { data: transactions } = useSuspenseQuery(
     convexQuery(api.transactions.getContactTransactions, {
       contactId: contactId as Id<"contacts">,
-    })
+    }),
   );
 
   const [editingAdjustment, setEditingAdjustment] = useState(false);
@@ -61,7 +61,7 @@ function ContactDetail() {
     );
 
   return (
-    <div className="p-4 safe-area-inset flex flex-col gap-6 max-w-md mx-auto">
+    <div className="p-4 safe-area-inset flex flex-col gap-6 max-w-md mx-auto min-h-screen pb-32">
       <header className="flex items-center gap-4 py-4">
         <Button variant="ghost" size="icon" asChild className="rounded-2xl">
           <Link to="/contacts">
@@ -239,7 +239,7 @@ function ContactDetail() {
                     {tx.items.map((item: any, idx: number) => {
                       const hasTrays = item.qtyTrays > 0;
                       const hasLoose = item.qtyLoose > 0;
-                      
+
                       return (
                         <div
                           key={idx}
@@ -252,12 +252,18 @@ function ContactDetail() {
                             <div className="text-xs text-gray-500 space-y-0.5 mt-1">
                               {hasTrays && (
                                 <p>
-                                  {item.qtyTrays} trays @ ₹{(item.rateApplied * (item.product?.eggsPerTray || 30)).toFixed(2)}/tray
+                                  {item.qtyTrays} trays @ ₹
+                                  {(
+                                    item.rateApplied *
+                                    (item.product?.eggsPerTray || 30)
+                                  ).toFixed(2)}
+                                  /tray
                                 </p>
                               )}
                               {hasLoose && (
                                 <p>
-                                  {item.qtyLoose} loose @ ₹{item.rateApplied}/egg
+                                  {item.qtyLoose} loose @ ₹{item.rateApplied}
+                                  /egg
                                 </p>
                               )}
                               {item.breakageQty > 0 && (
@@ -268,7 +274,13 @@ function ContactDetail() {
                             </div>
                           </div>
                           <p className="font-bold text-gray-900 text-right">
-                            ₹{((item.qtyTrays * (item.product?.eggsPerTray || 30) + item.qtyLoose) * item.rateApplied).toFixed(2)}
+                            ₹
+                            {(
+                              (item.qtyTrays *
+                                (item.product?.eggsPerTray || 30) +
+                                item.qtyLoose) *
+                              item.rateApplied
+                            ).toFixed(2)}
                           </p>
                         </div>
                       );

@@ -16,13 +16,13 @@ export const Route = createFileRoute("/products")({
 
 function Products() {
   const { data: products } = useSuspenseQuery(
-    convexQuery(api.products.getProducts, {})
+    convexQuery(api.products.getProducts, {}),
   );
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<Id<"products"> | null>(null);
 
   return (
-    <div className="min-h-[100dvh] bg-gray-50 p-4 safe-area-inset">
+    <div className="min-h-[100dvh] bg-gray-50 p-4 pb-32 safe-area-inset">
       <div className="max-w-md mx-auto">
         <header className="flex items-center gap-4 py-4 mb-6">
           <Link to="/">
@@ -98,15 +98,13 @@ function ProductForm({
   onClose: () => void;
 }) {
   const { data: products } = useSuspenseQuery(
-    convexQuery(api.products.getProducts, {})
+    convexQuery(api.products.getProducts, {}),
   );
-  const product = productId
-    ? products.find((p) => p._id === productId)
-    : null;
+  const product = productId ? products.find((p) => p._id === productId) : null;
 
   const [name, setName] = useState(product?.name || "");
   const [eggsPerTray, setEggsPerTray] = useState(
-    product?.eggsPerTray?.toString() || "30"
+    product?.eggsPerTray?.toString() || "30",
   );
 
   const createProduct = useMutation(api.products.createProduct);
@@ -206,11 +204,7 @@ function DeleteButton({ productId }: { productId: Id<"products"> }) {
   }
 
   return (
-    <Button
-      variant="ghost"
-      size="icon"
-      onClick={() => setConfirming(true)}
-    >
+    <Button variant="ghost" size="icon" onClick={() => setConfirming(true)}>
       <Trash2 className="size-4 text-gray-400" />
     </Button>
   );

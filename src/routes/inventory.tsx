@@ -17,12 +17,12 @@ export const Route = createFileRoute("/inventory")({
 
 function Inventory() {
   const { data: products } = useSuspenseQuery(
-    convexQuery(api.inventory.getCurrentStock, {})
+    convexQuery(api.inventory.getCurrentStock, {}),
   );
   const [showModal, setShowModal] = useState(false);
 
   return (
-    <div className="min-h-[100dvh] bg-gray-50 p-4 safe-area-inset">
+    <div className="min-h-[100dvh] bg-gray-50 p-4 pb-32 safe-area-inset">
       <div className="max-w-md mx-auto">
         {/* Header */}
         <header className="flex items-center gap-4 py-4 mb-6">
@@ -106,25 +106,34 @@ function StockCheckModal({
   onClose: () => void;
 }) {
   const [checkType, setCheckType] = useState<"MORNING" | "EVENING" | null>(
-    null
+    null,
   );
   const [counts, setCounts] = useState<
     Record<string, { trays: number; loose: number; remarks: string }>
   >({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const performCheck = useMutation(api.inventory.performStockCheck);
 
   const handleSubmit = async () => {
     if (!checkType) return;
 
-    const checks = products.map((p) => ({
-      productId: p._id,
-      physicalQtyTrays: counts[p._id]?.trays || 0,
-      physicalQtyLoose: counts[p._id]?.loose || 0,
-      remarks: counts[p._id]?.remarks || undefined,
-    }));
+    setIsSubmitting(true);
+    try {
+      const checks = products.map((p) => ({
+        productId: p._id,
+        physicalQtyTrays: counts[p._id]?.trays || 0,
+        physicalQtyLoose: counts[p._id]?.loose || 0,
+        remarks: counts[p._id]?.remarks || undefined,
+      }));
 
-    await performCheck({ type: checkType, checks });
-    onClose();
+      await performCheck({ type: checkType, checks });
+      onClose();
+    } catch (error) {
+      console.error("Failed to submit stock check", error);
+      alert("Failed to submit stock check");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const getVariance = (productId: string, field: "trays" | "loose") => {
@@ -168,7 +177,9 @@ function StockCheckModal({
           {!checkType && (
             <div className="space-y-3">
               <p className="text-gray-600 text-sm mb-4">
-                Enter physical counts to sync system inventory with actual stock. Any variances will be recorded and inventory will be updated.
+                Enter physical counts to sync system inventory with actual
+                stock. Any variances will be recorded and inventory will be
+                updated.
               </p>
               <button
                 onClick={() => setCheckType("MORNING")}
@@ -198,13 +209,11 @@ function StockCheckModal({
                 const varianceTrays = getVariance(product._id, "trays");
                 const varianceLoose = getVariance(product._id, "loose");
                 const hasInput = counts[product._id];
-                const hasVariance = hasInput && (varianceTrays !== 0 || varianceLoose !== 0);
+                const hasVariance =
+                  hasInput && (varianceTrays !== 0 || varianceLoose !== 0);
 
                 return (
-                  <Card
-                    key={product._id}
-                    className="border-gray-200 shadow-sm"
-                  >
+                  <Card key={product._id} className="border-gray-200 shadow-sm">
                     <CardContent className="p-4 space-y-3">
                       <h3 className="text-gray-900 font-semibold">
                         {product.name}
@@ -326,9 +335,14 @@ function StockCheckModal({
                             <>
                               <AlertCircle className="size-5 text-red-600" />
                               <span className="text-red-700 text-sm font-medium">
-                                Variance: {varianceTrays !== 0 && `${varianceTrays > 0 ? "+" : ""}${varianceTrays} trays`}
-                                {varianceTrays !== 0 && varianceLoose !== 0 && ", "}
-                                {varianceLoose !== 0 && `${varianceLoose > 0 ? "+" : ""}${varianceLoose} loose`}
+                                Variance:{" "}
+                                {varianceTrays !== 0 &&
+                                  `${varianceTrays > 0 ? "+" : ""}${varianceTrays} trays`}
+                                {varianceTrays !== 0 &&
+                                  varianceLoose !== 0 &&
+                                  ", "}
+                                {varianceLoose !== 0 &&
+                                  `${varianceLoose > 0 ? "+" : ""}${varianceLoose} loose`}
                               </span>
                             </>
                           )}
@@ -341,10 +355,10 @@ function StockCheckModal({
 
               <Button
                 onClick={handleSubmit}
-                disabled={performCheck.isPending}
+                disabled={isSubmitting}
                 className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-5 rounded-xl text-base font-semibold shadow-lg"
               >
-                {performCheck.isPending ? "Saving..." : "Submit Stock Check"}
+                {isSubmitting ? "Saving..." : "Submit Stock Check"}
               </Button>
             </>
           )}

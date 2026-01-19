@@ -17,7 +17,7 @@ export const Route = createFileRoute("/contacts/")({
 
 function Contacts() {
   const { data: contacts } = useSuspenseQuery(
-    convexQuery(api.contacts.getContacts, {})
+    convexQuery(api.contacts.getContacts, {}),
   );
   const createContact = useMutation(api.contacts.createContact);
 
@@ -33,7 +33,7 @@ function Contacts() {
   const filteredContacts = contacts.filter(
     (c: any) =>
       c.name.toLowerCase().includes(search.toLowerCase()) ||
-      (c.phone && c.phone.includes(search))
+      (c.phone && c.phone.includes(search)),
   );
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -56,7 +56,7 @@ function Contacts() {
   };
 
   return (
-    <div className="p-4 safe-area-inset flex flex-col gap-6 max-w-md mx-auto">
+    <div className="p-4 safe-area-inset flex flex-col gap-6 max-w-md mx-auto min-h-screen pb-32">
       <header className="flex items-center justify-between py-4">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" asChild className="rounded-2xl">
@@ -75,7 +75,7 @@ function Contacts() {
           <Plus
             className={cn(
               "size-6 transition-transform",
-              isAdding ? "rotate-45" : ""
+              isAdding ? "rotate-45" : "",
             )}
           />
         </Button>
@@ -96,7 +96,7 @@ function Contacts() {
                     "flex-1 py-2 text-sm font-bold rounded-xl transition-all",
                     newType === "customer"
                       ? "bg-white text-indigo-600 shadow-sm"
-                      : "text-gray-500"
+                      : "text-gray-500",
                   )}
                 >
                   Customer
@@ -108,7 +108,7 @@ function Contacts() {
                     "flex-1 py-2 text-sm font-bold rounded-xl transition-all",
                     newType === "vendor"
                       ? "bg-white text-indigo-600 shadow-sm"
-                      : "text-gray-500"
+                      : "text-gray-500",
                   )}
                 >
                   Vendor
@@ -165,7 +165,7 @@ function Contacts() {
                       "size-12 rounded-2xl flex items-center justify-center",
                       contact.type === "vendor"
                         ? "bg-amber-100"
-                        : "bg-indigo-100"
+                        : "bg-indigo-100",
                     )}
                   >
                     <UserCircle
@@ -173,7 +173,7 @@ function Contacts() {
                         "size-7",
                         contact.type === "vendor"
                           ? "text-amber-600"
-                          : "text-indigo-600"
+                          : "text-indigo-600",
                       )}
                     />
                   </div>
@@ -206,7 +206,7 @@ function Contacts() {
                       "font-black text-lg leading-none",
                       contact.currentBalance > 0
                         ? "text-red-500"
-                        : "text-emerald-500"
+                        : "text-emerald-500",
                     )}
                   >
                     ₹{Math.abs(contact.currentBalance).toLocaleString()}

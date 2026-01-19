@@ -8,7 +8,6 @@ import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
-import { cn } from "../../lib/utils";
 
 export const Route = createFileRoute("/intake/new")({
   component: NewIntake,
@@ -16,10 +15,10 @@ export const Route = createFileRoute("/intake/new")({
 
 function NewIntake() {
   const { data: contacts } = useSuspenseQuery(
-    convexQuery(api.contacts.getContacts, { type: "vendor" })
+    convexQuery(api.contacts.getContacts, { type: "vendor" }),
   );
   const { data: products } = useSuspenseQuery(
-    convexQuery(api.products.getProducts, {})
+    convexQuery(api.products.getProducts, {}),
   );
   const createTransaction = useMutation(api.transactions.createTransaction);
 
@@ -29,14 +28,15 @@ function NewIntake() {
   const [search, setSearch] = useState("");
   const [items, setItems] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isCash, setIsCash] = useState(false);
+  const [cashCollectedEnabled, setCashCollectedEnabled] = useState(false);
+  const [cashCollected, setCashCollected] = useState("");
 
   const filteredContacts = useMemo(
     () =>
       contacts.filter((c: any) =>
-        c.name.toLowerCase().includes(search.toLowerCase())
+        c.name.toLowerCase().includes(search.toLowerCase()),
       ),
-    [contacts, search]
+    [contacts, search],
   );
 
   const addItem = (product: any) => {
@@ -64,6 +64,8 @@ function NewIntake() {
       return;
     }
 
+    const cashAmount = cashCollectedEnabled ? Number(cashCollected) || 0 : 0;
+
     setIsSubmitting(true);
     try {
       // 1. Record Purchase
@@ -79,14 +81,15 @@ function NewIntake() {
           rateApplied: Number(item.rateApplied),
           breakageQty: 0,
         })),
+        cashCollected: cashAmount > 0 ? cashAmount : undefined,
       });
 
       // 2. If Cash, record payment out immediately
-      if (isCash) {
+      if (cashAmount > 0) {
         await createTransaction({
           contactId: selectedContact._id,
           type: "PAYMENT_OUT",
-          amount: totalAmount,
+          amount: cashAmount,
           date: Date.now(),
           description: "Cash payment for purchase",
         });
@@ -102,7 +105,7 @@ function NewIntake() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col pb-24">
+    <div className="min-h-screen bg-gray-50 flex flex-col pb-48">
       <div className="p-4 safe-area-inset max-w-md mx-auto w-full flex-1">
         <header className="flex items-center gap-4 py-4">
           <Button variant="ghost" size="icon" asChild className="rounded-2xl">
@@ -162,7 +165,7 @@ function NewIntake() {
                     <p className="text-white/70 text-sm font-medium">
                       Balance: ₹
                       {Math.abs(
-                        selectedContact.currentBalance
+                        selectedContact.currentBalance,
                       ).toLocaleString()}
                     </p>
                   </div>
@@ -180,32 +183,7 @@ function NewIntake() {
           )}
         </section>
 
-        {/* Payment Status */}
-        <section className="mb-6">
-          <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block ml-1">
-            Payment Status
-          </label>
-          <div className="grid grid-cols-2 gap-2 bg-gray-100 p-1 rounded-2xl">
-            <button
-              onClick={() => setIsCash(false)}
-              className={cn(
-                "py-3 font-bold text-sm rounded-xl transition-all",
-                !isCash ? "bg-white text-indigo-600 shadow-sm" : "text-gray-500"
-              )}
-            >
-              Credit (Pay Later)
-            </button>
-            <button
-              onClick={() => setIsCash(true)}
-              className={cn(
-                "py-3 font-bold text-sm rounded-xl transition-all",
-                isCash ? "bg-emerald-500 text-white shadow-sm" : "text-gray-500"
-              )}
-            >
-              Cash (Paid Now)
-            </button>
-          </div>
-        </section>
+        {/* Cash Paid logic will be at the bottom like Sales */}
 
         {/* Items Section */}
         <section className="space-y-4">
@@ -213,7 +191,7 @@ function NewIntake() {
             <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block ml-1">
               Egg Varieties Received
             </label>
-            <div className="flex gap-2">
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
               {products.map((p: any) => (
                 <Button
                   key={p._id}
@@ -299,28 +277,78 @@ function NewIntake() {
 
         {/* Summary */}
         {items.length > 0 && (
-          <section className="mt-8 p-6 bg-amber-50 rounded-3xl border border-amber-100 flex justify-between items-center">
-            <div>
-              <p className="text-xs font-bold text-amber-500 uppercase tracking-widest">
-                Total Cost
-              </p>
-              <p className="text-3xl font-black text-indigo-950">
-                ₹{totalAmount.toLocaleString()}
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="text-xs font-bold text-indigo-400 uppercase tracking-widest">
-                Post-Balance
-              </p>
-              <p className="text-sm font-bold text-gray-600">
-                {isCash ? "Paid in Full" : "Added to Ledger"}
-              </p>
-            </div>
-          </section>
+          <>
+            {/* Cash Paid Input */}
+            <section className="mt-6">
+              <label className="flex items-center gap-2 mb-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={cashCollectedEnabled}
+                  onChange={(e) => {
+                    setCashCollectedEnabled(e.target.checked);
+                    if (e.target.checked) {
+                      setCashCollected(totalAmount.toString());
+                    }
+                  }}
+                  className="size-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                />
+                <span className="text-sm font-bold text-gray-700">
+                  Cash Paid Now
+                </span>
+              </label>
+              {cashCollectedEnabled && (
+                <div className="space-y-2">
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={cashCollected}
+                    onChange={(e) => setCashCollected(e.target.value)}
+                    onFocus={(e) =>
+                      e.target.addEventListener(
+                        "wheel",
+                        (evt) => evt.preventDefault(),
+                        { passive: false },
+                      )
+                    }
+                    className="bg-white border-gray-200 h-14 text-lg font-bold"
+                    placeholder="0"
+                  />
+                  {Number(cashCollected) < totalAmount && (
+                    <p className="text-sm text-amber-600 font-medium ml-1">
+                      Credit: ₹
+                      {(totalAmount - Number(cashCollected)).toLocaleString()}
+                    </p>
+                  )}
+                </div>
+              )}
+            </section>
+
+            <section className="mt-8 p-6 bg-amber-50 rounded-3xl border border-amber-100 flex justify-between items-center">
+              <div>
+                <p className="text-xs font-bold text-amber-500 uppercase tracking-widest">
+                  Total Cost
+                </p>
+                <p className="text-3xl font-black text-indigo-950">
+                  ₹{totalAmount.toLocaleString()}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs font-bold text-indigo-400 uppercase tracking-widest">
+                  Status
+                </p>
+                <p className="text-sm font-bold text-gray-600">
+                  {cashCollectedEnabled && Number(cashCollected) >= totalAmount
+                    ? "Paid in Full"
+                    : "Added to Ledger"}
+                </p>
+              </div>
+            </section>
+          </>
         )}
       </div>
 
-      <footer className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-xl border-t border-gray-100">
+      <footer className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom))] left-0 right-0 p-4 bg-white/80 backdrop-blur-xl border-t border-gray-100 z-40">
         <div className="max-w-md mx-auto">
           <Button
             size="xl"

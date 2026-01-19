@@ -15,13 +15,13 @@ export const Route = createFileRoute("/sales/new")({
 
 function NewSale() {
   const { data: contacts } = useSuspenseQuery(
-    convexQuery(api.contacts.getContacts, { type: "customer" })
+    convexQuery(api.contacts.getContacts, { type: "customer" }),
   );
   const { data: rates } = useSuspenseQuery(
-    convexQuery(api.rates.getTodayRates, {})
+    convexQuery(api.rates.getTodayRates, {}),
   );
   const { data: products } = useSuspenseQuery(
-    convexQuery(api.products.getProducts, {})
+    convexQuery(api.products.getProducts, {}),
   );
   const createTransaction = useMutation(api.transactions.createTransaction);
 
@@ -42,17 +42,17 @@ function NewSale() {
   const filteredContacts = useMemo(
     () =>
       contacts.filter((c: any) =>
-        c.name.toLowerCase().includes(search.toLowerCase())
+        c.name.toLowerCase().includes(search.toLowerCase()),
       ),
-    [contacts, search]
+    [contacts, search],
   );
 
   const addItem = (product: any) => {
     const productRate = rates.find((r: any) => r.productId === product._id);
-    
+
     const ratePerEgg = productRate?.ratePerEgg || 0;
     const ratePerTray = productRate?.ratePerTray || 0;
-    
+
     const adjustment = selectedContact?.priceAdjustment || 0;
 
     setItems([
@@ -97,11 +97,15 @@ function NewSale() {
 
     // Show confirmation for credit or overpayment
     if (creditAmount > 0) {
-      setConfirmationMessage(`Mark ₹${creditAmount.toLocaleString()} as credit?`);
+      setConfirmationMessage(
+        `Mark ₹${creditAmount.toLocaleString()} as credit?`,
+      );
       setShowConfirmation(true);
       return;
     } else if (creditAmount < 0) {
-      setConfirmationMessage(`Customer paid ₹${Math.abs(creditAmount).toLocaleString()} extra. This will be added to their credit balance. Continue?`);
+      setConfirmationMessage(
+        `Customer paid ₹${Math.abs(creditAmount).toLocaleString()} extra. This will be added to their credit balance. Continue?`,
+      );
       setShowConfirmation(true);
       return;
     }
@@ -112,7 +116,7 @@ function NewSale() {
 
   const submitSale = async () => {
     const cashAmount = cashCollectedEnabled ? Number(cashCollected) || 0 : 0;
-    
+
     setIsSubmitting(true);
     try {
       await createTransaction({
@@ -146,7 +150,7 @@ function NewSale() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col pb-24">
+    <div className="min-h-screen bg-gray-50 flex flex-col pb-48">
       <div className="p-4 safe-area-inset max-w-md mx-auto w-full flex-1">
         <header className="flex items-center gap-4 py-4">
           <Button variant="ghost" size="icon" asChild className="rounded-2xl">
@@ -255,7 +259,8 @@ function NewSale() {
                       {item.product.name} Egg
                     </h3>
                     <p className="text-xs text-gray-500 font-medium mt-1">
-                      Stock: {item.product.currentStockQtyTrays} trays, {item.product.currentStockQtyLoose} loose
+                      Stock: {item.product.currentStockQtyTrays} trays,{" "}
+                      {item.product.currentStockQtyLoose} loose
                     </p>
                   </div>
                   <Button
@@ -401,7 +406,13 @@ function NewSale() {
                     step="0.01"
                     value={cashCollected}
                     onChange={(e) => setCashCollected(e.target.value)}
-                    onFocus={(e) => e.target.addEventListener('wheel', (evt) => evt.preventDefault(), { passive: false })}
+                    onFocus={(e) =>
+                      e.target.addEventListener(
+                        "wheel",
+                        (evt) => evt.preventDefault(),
+                        { passive: false },
+                      )
+                    }
                     className="bg-white border-gray-200 h-14 text-lg font-bold"
                     placeholder="0"
                   />
@@ -440,7 +451,7 @@ function NewSale() {
       </div>
 
       {/* Sticky Footer - Thumb Zone */}
-      <footer className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-xl border-t border-gray-100 z-50">
+      <footer className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom))] left-0 right-0 p-4 bg-white/80 backdrop-blur-xl border-t border-gray-100 z-40">
         <div className="max-w-md mx-auto grid grid-cols-1 gap-2">
           <Button
             size="xl"
@@ -464,7 +475,9 @@ function NewSale() {
       {showConfirmation && (
         <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl">
-            <h3 className="text-xl font-bold text-gray-900 mb-3">Confirm Sale</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-3">
+              Confirm Sale
+            </h3>
             <p className="text-gray-600 mb-6">{confirmationMessage}</p>
             <div className="flex gap-3">
               <Button

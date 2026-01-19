@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Card, CardContent } from "../components/ui/card";
+import { EggLoader } from "../components/ui/EggLoader";
 import { Button } from "../components/ui/button";
 import {
   TrendingUp,
@@ -16,28 +17,33 @@ import { api } from "../../convex/_generated/api";
 
 export const Route = createFileRoute("/")({
   component: Home,
+  pendingComponent: () => (
+    <div className="h-full min-h-[50vh] flex items-center justify-center safe-area-inset">
+      <EggLoader text="Cracking fresh data..." />
+    </div>
+  ),
 });
 
 function Home() {
   const { data: stats } = useSuspenseQuery(
-    convexQuery(api.transactions.getDashboardStats, {})
+    convexQuery(api.transactions.getDashboardStats, {}),
   );
   const { data: rates } = useSuspenseQuery(
-    convexQuery(api.rates.getTodayRates, {})
+    convexQuery(api.rates.getTodayRates, {}),
   );
   const { data: products } = useSuspenseQuery(
-    convexQuery(api.products.getProducts, {})
+    convexQuery(api.products.getProducts, {}),
   );
 
   return (
-    <div className="p-4 safe-area-inset flex flex-col gap-6 max-w-md mx-auto">
+    <div className="p-4 safe-area-inset flex flex-col gap-6 max-w-md mx-auto min-h-screen pb-32">
       {/* Header */}
       <header className="flex justify-between items-center py-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-indigo-950">
-            EggFlow
+            Ganesh Egg Centre
           </h1>
-          <p className="text-gray-500 font-medium">Ganesh Egg Centre</p>
+          <p className="text-gray-500 font-medium">Wholesale & Supply</p>
         </div>
         <div className="bg-indigo-100 p-3 rounded-2xl">
           <Package className="text-indigo-600 size-6" />
@@ -110,7 +116,10 @@ function Home() {
               const product = products.find((p) => p._id === rate.productId);
               if (!product) return null;
               return (
-                <Card key={rate._id} className="bg-white border-gray-100 shadow-sm">
+                <Card
+                  key={rate._id}
+                  className="bg-white border-gray-100 shadow-sm"
+                >
                   <CardContent className="p-4">
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-bold text-gray-700">
@@ -130,11 +139,11 @@ function Home() {
                           </div>
                         </div>
                       </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
           {rates.length === 0 && (
             <div className="col-span-2 text-center py-6 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
               <p className="text-gray-400 text-sm font-medium">
@@ -267,7 +276,7 @@ function Badge({
       className={cn(
         "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center",
         variants[variant] || variants.default,
-        className
+        className,
       )}
     >
       {children}

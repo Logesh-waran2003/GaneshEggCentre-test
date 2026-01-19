@@ -3,11 +3,13 @@ import {
   Scripts,
   createRootRouteWithContext,
   Link,
+  Outlet,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import appCss from "../styles.css?url";
 import { QueryClient } from "@tanstack/react-query";
+import { MobileAppShell } from "../components/layout/MobileAppShell";
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
@@ -18,9 +20,9 @@ export const Route = createRootRouteWithContext<{
       {
         name: "viewport",
         content:
-          "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0",
+          "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover",
       },
-      { title: "EggFlow - Wholesale Egg Supply Management" },
+      { title: "Ganesh Egg Centre - Wholesale Supply" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
@@ -34,6 +36,7 @@ export const Route = createRootRouteWithContext<{
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap",
       },
+      { rel: "manifest", href: "/manifest.webmanifest" },
     ],
   }),
   notFoundComponent: () => (
@@ -55,8 +58,17 @@ export const Route = createRootRouteWithContext<{
       </div>
     </div>
   ),
+  component: RootComponent,
   shellComponent: RootDocument,
 });
+
+function RootComponent() {
+  return (
+    <MobileAppShell>
+      <Outlet />
+    </MobileAppShell>
+  );
+}
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
