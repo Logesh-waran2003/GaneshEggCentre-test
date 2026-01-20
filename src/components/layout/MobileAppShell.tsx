@@ -1,8 +1,9 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { Workbox } from "workbox-window";
-import { Home, Wallet, PlusCircle, Settings } from "lucide-react";
+import { Home, Wallet, PlusCircle, Receipt, LogOut, Settings } from "lucide-react";
 import { cn } from "../../lib/utils";
+import { useAuth } from "../../contexts/AuthContext";
 
 interface MobileAppShellProps {
   children: React.ReactNode;
@@ -34,6 +35,7 @@ export function MobileAppShell({ children }: MobileAppShellProps) {
 function BottomNavigation() {
   const location = useLocation();
   const currentPath = location.pathname;
+  const { logout } = useAuth();
 
   const navItems = [
     {
@@ -56,10 +58,17 @@ function BottomNavigation() {
       highlight: true,
     },
     {
-      label: "Settings",
-      href: "/settings",
-      icon: Settings,
-      match: (path: string) => path.startsWith("/settings"),
+      label: "Expenses",
+      href: "/expenses",
+      icon: Receipt,
+      match: (path: string) => path.startsWith("/expenses"),
+    },
+    {
+      label: "Logout",
+      href: "#",
+      icon: LogOut,
+      match: () => false,
+      onClick: logout,
     },
   ];
 
@@ -69,6 +78,27 @@ function BottomNavigation() {
         {navItems.map((item) => {
           const isActive = item.match(currentPath);
           const Icon = item.icon;
+
+          if (item.onClick) {
+            return (
+              <button
+                key={item.label}
+                onClick={item.onClick}
+                className={cn(
+                  "flex flex-col items-center justify-center w-full h-full space-y-1 active:scale-95 transition-transform",
+                  "text-gray-400 hover:text-gray-600",
+                )}
+              >
+                <Icon
+                  className="size-6 transition-colors"
+                  strokeWidth={2}
+                />
+                <span className="text-[10px] font-medium tracking-wide">
+                  {item.label}
+                </span>
+              </button>
+            );
+          }
 
           if (item.highlight) {
             return (
@@ -91,6 +121,7 @@ function BottomNavigation() {
             <Link
               key={item.href}
               to={item.href}
+              onClick={item.onClick}
               className={cn(
                 "flex flex-col items-center justify-center w-full h-full space-y-1 active:scale-95 transition-transform",
                 isActive

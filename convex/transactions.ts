@@ -14,6 +14,7 @@ export const createTransaction = mutation({
     date: v.number(),
     description: v.optional(v.string()),
     cashCollected: v.optional(v.number()),
+    salesTripId: v.optional(v.id("saleTrips")),
     items: v.optional(
       v.array(
         v.object({
@@ -41,6 +42,7 @@ export const createTransaction = mutation({
       date: args.date,
       description: args.description,
       cashCollected: args.cashCollected,
+      salesTripId: args.salesTripId,
     });
     console.log("Created transaction:", transactionId);
 
@@ -223,5 +225,28 @@ export const getDashboardStats = query({
       totalTraysSold,
       salesCount: todaySales.length,
     };
+  },
+});
+
+export const getTransactionsByEmployee = query({
+  args: {
+    employeeId: v.id("users"),
+    startDate: v.optional(v.number()),
+    endDate: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    let transactions = await ctx.db
+      .query("transactions")
+      .filter((q) => q.eq(q.field("createdBy"), args.employeeId))
+      .collect();
+
+    if (args.startDate) {
+      transactions = transactions.filter((t) => t.date >= args.startDate!);
+    }
+    if (args.endDate) {
+      transactions = transactions.filter((t) => t.date <= args.endDate!);
+    }
+
+    return transactions;
   },
 });

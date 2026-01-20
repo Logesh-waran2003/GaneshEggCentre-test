@@ -11,9 +11,15 @@ import { api } from "../../../convex/_generated/api";
 
 export const Route = createFileRoute("/sales/new")({
   component: NewSale,
+  validateSearch: (search: Record<string, unknown>) => {
+    return {
+      tripId: search.tripId as string | undefined,
+    };
+  },
 });
 
 function NewSale() {
+  const searchParams = Route.useSearch();
   const { data: contacts } = useSuspenseQuery(
     convexQuery(api.contacts.getContacts, { type: "customer" }),
   );
@@ -126,6 +132,7 @@ function NewSale() {
         date: Date.now(),
         description: remarks || undefined,
         cashCollected: cashAmount > 0 ? cashAmount : undefined,
+        salesTripId: searchParams.tripId as any,
         items: items.map((item) => ({
           productId: item.product._id,
           qtyTrays: Number(item.qtyTrays) || 0,

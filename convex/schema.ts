@@ -53,7 +53,36 @@ export default defineSchema({
     cashCollected: v.optional(v.number()),
     relatedTransactionId: v.optional(v.id("transactions")),
     createdBy: v.optional(v.id("users")),
+    salesTripId: v.optional(v.id("saleTrips")),
   }).index("by_contactId", ["contactId"]),
+
+  saleTrips: defineTable({
+    date: v.number(),
+    employees: v.array(v.id("users")),
+    createdBy: v.id("users"),
+    status: v.union(
+      v.literal("PENDING_APPROVAL"),
+      v.literal("IN_PROGRESS"),
+      v.literal("COMPLETED"),
+      v.literal("APPROVED")
+    ),
+    productId: v.id("products"),
+    loadedQtyTrays: v.number(),
+    loadedQtyLoose: v.number(),
+    soldQtyTrays: v.number(),
+    soldQtyLoose: v.number(),
+    returnedQtyTrays: v.number(),
+    returnedQtyLoose: v.number(),
+    damagedQtyTrays: v.number(),
+    damagedQtyLoose: v.number(),
+    totalCashCollected: v.number(),
+    startedAt: v.optional(v.number()),
+    completedAt: v.optional(v.number()),
+    approvedAt: v.optional(v.number()),
+    approvedBy: v.optional(v.id("users")),
+  })
+    .index("by_status", ["status"])
+    .index("by_date", ["date"]),
 
   transactionItems: defineTable({
     transactionId: v.id("transactions"),
@@ -76,4 +105,26 @@ export default defineSchema({
     varianceLoose: v.number(),
     remarks: v.optional(v.string()),
   }).index("by_date", ["date"]),
+
+  expenses: defineTable({
+    amount: v.number(),
+    date: v.number(),
+    description: v.string(),
+    createdBy: v.id("users"),
+    employeeId: v.optional(v.id("users")),
+    createdAt: v.number(),
+  })
+    .index("by_date", ["date"])
+    .index("by_employee", ["employeeId"]),
+
+  tripExpenses: defineTable({
+    tripId: v.id("saleTrips"),
+    amount: v.number(),
+    description: v.string(),
+    employeeId: v.id("users"),
+    createdBy: v.id("users"),
+    createdAt: v.number(),
+  })
+    .index("by_tripId", ["tripId"])
+    .index("by_employee", ["employeeId"]),
 });

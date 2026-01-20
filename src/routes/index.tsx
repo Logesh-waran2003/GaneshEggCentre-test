@@ -11,6 +11,7 @@ import { requireAuth } from "../lib/auth";
 export const Route = createFileRoute("/")({
   beforeLoad: requireAuth,
   component: Home,
+  ssr: false,
   pendingComponent: () => (
     <div className="h-full min-h-[50vh] flex items-center justify-center safe-area-inset">
       <EggLoader text="Cracking fresh data..." />
@@ -27,6 +28,16 @@ function Home() {
   );
   const { data: products } = useSuspenseQuery(
     convexQuery(api.products.getProducts, {}),
+  );
+  const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
+  
+  const today = new Date();
+  today.setHours(12, 0, 0, 0);
+  
+  const { data: todayExpenses } = useSuspenseQuery(
+    convexQuery(api.expenses.getDailyTotal, {
+      date: today.getTime(),
+    }),
   );
 
   return (
@@ -88,6 +99,22 @@ function Home() {
                   {stats.totalTraysSold} Trays
                 </p>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-rose-600 to-pink-700 text-white border-none shadow-xl shadow-rose-200">
+          <CardContent className="p-6">
+            <p className="text-rose-100 text-sm font-medium mb-1 uppercase tracking-wider">
+              Today's Expenses
+            </p>
+            <div className="flex justify-between items-end">
+              <span className="text-4xl font-bold">
+                ₹{todayExpenses.toLocaleString()}
+              </span>
+              <Link to="/expenses" className="text-white/80 text-sm font-bold hover:text-white">
+                View →
+              </Link>
             </div>
           </CardContent>
         </Card>

@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UsersRouteImport } from './routes/users'
+import { Route as TripsRouteImport } from './routes/trips'
 import { Route as SetupRouteImport } from './routes/setup'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SalesRouteImport } from './routes/sales'
@@ -18,9 +19,14 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as LedgerRouteImport } from './routes/ledger'
 import { Route as InventoryRouteImport } from './routes/inventory'
 import { Route as IntakeRouteImport } from './routes/intake'
+import { Route as ExpensesRouteImport } from './routes/expenses'
 import { Route as ContactsRouteImport } from './routes/contacts'
+import { Route as AdminTripsRouteImport } from './routes/admin-trips'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as TripsIndexRouteImport } from './routes/trips/index'
 import { Route as ContactsIndexRouteImport } from './routes/contacts.index'
+import { Route as TripsNewRouteImport } from './routes/trips/new'
+import { Route as TripsTripIdRouteImport } from './routes/trips/$tripId'
 import { Route as SalesNewRouteImport } from './routes/sales/new'
 import { Route as IntakeNewRouteImport } from './routes/intake/new'
 import { Route as ContactsContactIdRouteImport } from './routes/contacts.$contactId'
@@ -28,6 +34,11 @@ import { Route as ContactsContactIdRouteImport } from './routes/contacts.$contac
 const UsersRoute = UsersRouteImport.update({
   id: '/users',
   path: '/users',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TripsRoute = TripsRouteImport.update({
+  id: '/trips',
+  path: '/trips',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SetupRoute = SetupRouteImport.update({
@@ -70,9 +81,19 @@ const IntakeRoute = IntakeRouteImport.update({
   path: '/intake',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ExpensesRoute = ExpensesRouteImport.update({
+  id: '/expenses',
+  path: '/expenses',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ContactsRoute = ContactsRouteImport.update({
   id: '/contacts',
   path: '/contacts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminTripsRoute = AdminTripsRouteImport.update({
+  id: '/admin-trips',
+  path: '/admin-trips',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -80,10 +101,25 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TripsIndexRoute = TripsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => TripsRoute,
+} as any)
 const ContactsIndexRoute = ContactsIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => ContactsRoute,
+} as any)
+const TripsNewRoute = TripsNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => TripsRoute,
+} as any)
+const TripsTripIdRoute = TripsTripIdRouteImport.update({
+  id: '/$tripId',
+  path: '/$tripId',
+  getParentRoute: () => TripsRoute,
 } as any)
 const SalesNewRoute = SalesNewRouteImport.update({
   id: '/new',
@@ -103,7 +139,9 @@ const ContactsContactIdRoute = ContactsContactIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin-trips': typeof AdminTripsRoute
   '/contacts': typeof ContactsRouteWithChildren
+  '/expenses': typeof ExpensesRoute
   '/intake': typeof IntakeRouteWithChildren
   '/inventory': typeof InventoryRoute
   '/ledger': typeof LedgerRoute
@@ -112,14 +150,20 @@ export interface FileRoutesByFullPath {
   '/sales': typeof SalesRouteWithChildren
   '/settings': typeof SettingsRoute
   '/setup': typeof SetupRoute
+  '/trips': typeof TripsRouteWithChildren
   '/users': typeof UsersRoute
   '/contacts/$contactId': typeof ContactsContactIdRoute
   '/intake/new': typeof IntakeNewRoute
   '/sales/new': typeof SalesNewRoute
+  '/trips/$tripId': typeof TripsTripIdRoute
+  '/trips/new': typeof TripsNewRoute
   '/contacts/': typeof ContactsIndexRoute
+  '/trips/': typeof TripsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin-trips': typeof AdminTripsRoute
+  '/expenses': typeof ExpensesRoute
   '/intake': typeof IntakeRouteWithChildren
   '/inventory': typeof InventoryRoute
   '/ledger': typeof LedgerRoute
@@ -132,12 +176,17 @@ export interface FileRoutesByTo {
   '/contacts/$contactId': typeof ContactsContactIdRoute
   '/intake/new': typeof IntakeNewRoute
   '/sales/new': typeof SalesNewRoute
+  '/trips/$tripId': typeof TripsTripIdRoute
+  '/trips/new': typeof TripsNewRoute
   '/contacts': typeof ContactsIndexRoute
+  '/trips': typeof TripsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin-trips': typeof AdminTripsRoute
   '/contacts': typeof ContactsRouteWithChildren
+  '/expenses': typeof ExpensesRoute
   '/intake': typeof IntakeRouteWithChildren
   '/inventory': typeof InventoryRoute
   '/ledger': typeof LedgerRoute
@@ -146,17 +195,23 @@ export interface FileRoutesById {
   '/sales': typeof SalesRouteWithChildren
   '/settings': typeof SettingsRoute
   '/setup': typeof SetupRoute
+  '/trips': typeof TripsRouteWithChildren
   '/users': typeof UsersRoute
   '/contacts/$contactId': typeof ContactsContactIdRoute
   '/intake/new': typeof IntakeNewRoute
   '/sales/new': typeof SalesNewRoute
+  '/trips/$tripId': typeof TripsTripIdRoute
+  '/trips/new': typeof TripsNewRoute
   '/contacts/': typeof ContactsIndexRoute
+  '/trips/': typeof TripsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin-trips'
     | '/contacts'
+    | '/expenses'
     | '/intake'
     | '/inventory'
     | '/ledger'
@@ -165,14 +220,20 @@ export interface FileRouteTypes {
     | '/sales'
     | '/settings'
     | '/setup'
+    | '/trips'
     | '/users'
     | '/contacts/$contactId'
     | '/intake/new'
     | '/sales/new'
+    | '/trips/$tripId'
+    | '/trips/new'
     | '/contacts/'
+    | '/trips/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin-trips'
+    | '/expenses'
     | '/intake'
     | '/inventory'
     | '/ledger'
@@ -185,11 +246,16 @@ export interface FileRouteTypes {
     | '/contacts/$contactId'
     | '/intake/new'
     | '/sales/new'
+    | '/trips/$tripId'
+    | '/trips/new'
     | '/contacts'
+    | '/trips'
   id:
     | '__root__'
     | '/'
+    | '/admin-trips'
     | '/contacts'
+    | '/expenses'
     | '/intake'
     | '/inventory'
     | '/ledger'
@@ -198,16 +264,22 @@ export interface FileRouteTypes {
     | '/sales'
     | '/settings'
     | '/setup'
+    | '/trips'
     | '/users'
     | '/contacts/$contactId'
     | '/intake/new'
     | '/sales/new'
+    | '/trips/$tripId'
+    | '/trips/new'
     | '/contacts/'
+    | '/trips/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminTripsRoute: typeof AdminTripsRoute
   ContactsRoute: typeof ContactsRouteWithChildren
+  ExpensesRoute: typeof ExpensesRoute
   IntakeRoute: typeof IntakeRouteWithChildren
   InventoryRoute: typeof InventoryRoute
   LedgerRoute: typeof LedgerRoute
@@ -216,6 +288,7 @@ export interface RootRouteChildren {
   SalesRoute: typeof SalesRouteWithChildren
   SettingsRoute: typeof SettingsRoute
   SetupRoute: typeof SetupRoute
+  TripsRoute: typeof TripsRouteWithChildren
   UsersRoute: typeof UsersRoute
 }
 
@@ -226,6 +299,13 @@ declare module '@tanstack/react-router' {
       path: '/users'
       fullPath: '/users'
       preLoaderRoute: typeof UsersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/trips': {
+      id: '/trips'
+      path: '/trips'
+      fullPath: '/trips'
+      preLoaderRoute: typeof TripsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/setup': {
@@ -284,11 +364,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IntakeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/expenses': {
+      id: '/expenses'
+      path: '/expenses'
+      fullPath: '/expenses'
+      preLoaderRoute: typeof ExpensesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/contacts': {
       id: '/contacts'
       path: '/contacts'
       fullPath: '/contacts'
       preLoaderRoute: typeof ContactsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-trips': {
+      id: '/admin-trips'
+      path: '/admin-trips'
+      fullPath: '/admin-trips'
+      preLoaderRoute: typeof AdminTripsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -298,12 +392,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/trips/': {
+      id: '/trips/'
+      path: '/'
+      fullPath: '/trips/'
+      preLoaderRoute: typeof TripsIndexRouteImport
+      parentRoute: typeof TripsRoute
+    }
     '/contacts/': {
       id: '/contacts/'
       path: '/'
       fullPath: '/contacts/'
       preLoaderRoute: typeof ContactsIndexRouteImport
       parentRoute: typeof ContactsRoute
+    }
+    '/trips/new': {
+      id: '/trips/new'
+      path: '/new'
+      fullPath: '/trips/new'
+      preLoaderRoute: typeof TripsNewRouteImport
+      parentRoute: typeof TripsRoute
+    }
+    '/trips/$tripId': {
+      id: '/trips/$tripId'
+      path: '/$tripId'
+      fullPath: '/trips/$tripId'
+      preLoaderRoute: typeof TripsTripIdRouteImport
+      parentRoute: typeof TripsRoute
     }
     '/sales/new': {
       id: '/sales/new'
@@ -364,9 +479,25 @@ const SalesRouteChildren: SalesRouteChildren = {
 
 const SalesRouteWithChildren = SalesRoute._addFileChildren(SalesRouteChildren)
 
+interface TripsRouteChildren {
+  TripsTripIdRoute: typeof TripsTripIdRoute
+  TripsNewRoute: typeof TripsNewRoute
+  TripsIndexRoute: typeof TripsIndexRoute
+}
+
+const TripsRouteChildren: TripsRouteChildren = {
+  TripsTripIdRoute: TripsTripIdRoute,
+  TripsNewRoute: TripsNewRoute,
+  TripsIndexRoute: TripsIndexRoute,
+}
+
+const TripsRouteWithChildren = TripsRoute._addFileChildren(TripsRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminTripsRoute: AdminTripsRoute,
   ContactsRoute: ContactsRouteWithChildren,
+  ExpensesRoute: ExpensesRoute,
   IntakeRoute: IntakeRouteWithChildren,
   InventoryRoute: InventoryRoute,
   LedgerRoute: LedgerRoute,
@@ -375,6 +506,7 @@ const rootRouteChildren: RootRouteChildren = {
   SalesRoute: SalesRouteWithChildren,
   SettingsRoute: SettingsRoute,
   SetupRoute: SetupRoute,
+  TripsRoute: TripsRouteWithChildren,
   UsersRoute: UsersRoute,
 }
 export const routeTree = rootRouteImport
