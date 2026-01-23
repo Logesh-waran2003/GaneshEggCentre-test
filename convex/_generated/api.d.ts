@@ -11,6 +11,7 @@
 import type * as auth from "../auth.js";
 import type * as contacts from "../contacts.js";
 import type * as expenses from "../expenses.js";
+import type * as featureFlags from "../featureFlags.js";
 import type * as inventory from "../inventory.js";
 import type * as products from "../products.js";
 import type * as rates from "../rates.js";
@@ -31,6 +32,7 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   contacts: typeof contacts;
   expenses: typeof expenses;
+  featureFlags: typeof featureFlags;
   inventory: typeof inventory;
   products: typeof products;
   rates: typeof rates;

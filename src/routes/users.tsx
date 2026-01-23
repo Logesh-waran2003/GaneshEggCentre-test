@@ -13,7 +13,7 @@ import {
 } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
 import { Id } from "../../convex/_generated/dataModel";
-import { requireAuth } from "../lib/auth";
+import { requireFeature } from "../lib/auth";
 import {
   Users as UsersIcon,
   ShieldCheck,
@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 
 export const Route = createFileRoute("/users")({
-  beforeLoad: requireAuth,
+  beforeLoad: requireFeature("userManagement"),
   component: UsersPage,
 });
 

@@ -9,6 +9,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useAuth } from "../contexts/AuthContext";
+import { useFeature } from "../hooks/useFeature";
 import { requireAuth } from "../lib/auth";
 
 export const Route = createFileRoute("/expenses")({
@@ -18,6 +19,8 @@ export const Route = createFileRoute("/expenses")({
 
 function Expenses() {
   const { token, currentUser } = useAuth();
+  const canDeleteAny = useFeature("deleteAnyExpense");
+  const canDeleteOwn = useFeature("deleteOwnExpense");
   const [showForm, setShowForm] = useState(false);
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -220,7 +223,9 @@ function Expenses() {
             </CardContent>
           </Card>
         ) : (
-          expenses.map((expense) => (
+          expenses.map((expense) => {
+            const canDelete = canDeleteAny || (canDeleteOwn && expense.employeeId === currentUser?._id);
+            return (
           <Card key={expense._id} className="border-none shadow-sm">
             <CardContent className="p-4">
               <div className="flex justify-between items-start">
@@ -235,19 +240,21 @@ function Expenses() {
                   <p className="text-lg font-black text-rose-600">
                     ₹{expense.amount.toLocaleString()}
                   </p>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDelete(expense._id)}
-                    className="size-8"
-                  >
-                    <Trash2 className="size-4 text-gray-400" />
-                  </Button>
+                  {canDelete && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDelete(expense._id)}
+                      className="size-8"
+                    >
+                      <Trash2 className="size-4 text-gray-400" />
+                    </Button>
+                  )}
                 </div>
               </div>
             </CardContent>
           </Card>
-        )))
+        )}))
         }
       </div>
     </div>

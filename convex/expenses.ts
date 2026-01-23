@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { hasFeature } from "./featureFlags";
 
 async function requireAuth(ctx: any, token: string) {
   const session = await ctx.db
@@ -60,15 +61,25 @@ export const listExpenses = query({
     employeeId: v.optional(v.id("users")),
   },
   handler: async (ctx, args) => {
-    await requireAuth(ctx, args.token);
+    const user = await requireAuth(ctx, args.token);
 
-    let query = ctx.db.query("expenses");
+    let expenses;
     
+    // Filter by employee if specified or if user can only view own expenses
     if (args.employeeId) {
-      query = query.withIndex("by_employee", (q) => q.eq("employeeId", args.employeeId));
+      expenses = await ctx.db
+        .query("expenses")
+        .withIndex("by_employee", (q) => q.eq("employeeId", args.employeeId))
+        .collect();
+    } else if (!hasFeature("viewAllExpenses", user.role)) {
+      // Employees can only see their own expenses
+      expenses = await ctx.db
+        .query("expenses")
+        .withIndex("by_employee", (q) => q.eq("employeeId", user._id))
+        .collect();
+    } else {
+      expenses = await ctx.db.query("expenses").collect();
     }
-
-    let expenses = await query.collect();
 
     if (args.startDate) {
       expenses = expenses.filter((e) => e.date >= args.startDate!);
@@ -77,11 +88,14 @@ export const listExpenses = query({
       expenses = expenses.filter((e) => e.date <= args.endDate!);
     }
 
-    const employeeIds = [...new Set(expenses.map(e => e.employeeId).filter(Boolean))] as string[];
+    const employeeIds = [...new Set(expenses.map(e => e.employeeId).filter(Boolean))];
     const employees = await Promise.all(employeeIds.map(id => ctx.db.get(id as any)));
-    const employeeMap = Object.fromEntries(
-      employees.filter(Boolean).map(e => [e!._id, e!.name])
-    );
+    const employeeMap: Record<string, string> = {};
+    employees.filter(Boolean).forEach(e => {
+      if (e && 'name' in e) {
+        employeeMap[e._id] = e.name as string;
+      }
+    });
 
     return expenses
       .map(expense => ({
@@ -127,7 +141,12 @@ export const deleteExpense = mutation({
       throw new Error("Expense not found");
     }
 
-    if (user.role !== "ADMIN" && expense.createdBy !== user._id) {
+    // Check feature flags
+    const canDeleteAny = hasFeature("deleteAnyExpense", user.role);
+    const canDeleteOwn = hasFeature("deleteOwnExpense", user.role);
+    const isOwnExpense = expense.employeeId === user._id;
+
+    if (!canDeleteAny && !(canDeleteOwn && isOwnExpense)) {
       throw new Error("Not authorized to delete this expense");
     }
 

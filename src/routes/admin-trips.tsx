@@ -8,10 +8,10 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useAuth } from "../contexts/AuthContext";
-import { requireAuth } from "../lib/auth";
+import { requireFeature } from "../lib/auth";
 
 export const Route = createFileRoute("/admin-trips")({
-  beforeLoad: requireAuth,
+  beforeLoad: requireFeature("adminTrips"),
   component: AdminTrips,
 });
 

@@ -1,7 +1,14 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { Workbox } from "workbox-window";
-import { Home, Wallet, PlusCircle, Receipt, LogOut, Settings } from "lucide-react";
+import {
+  Home,
+  Wallet,
+  PlusCircle,
+  Receipt,
+  LogOut,
+  Settings,
+} from "lucide-react";
 import { cn } from "../../lib/utils";
 import { useAuth } from "../../contexts/AuthContext";
 
@@ -10,6 +17,9 @@ interface MobileAppShellProps {
 }
 
 export function MobileAppShell({ children }: MobileAppShellProps) {
+  const location = useLocation();
+  const isLoginPage = location.pathname === "/login";
+
   useEffect(() => {
     if ("serviceWorker" in navigator) {
       const wb = new Workbox("/sw.js");
@@ -22,12 +32,17 @@ export function MobileAppShell({ children }: MobileAppShellProps) {
   return (
     <div className="flex flex-col min-h-[100dvh] bg-gray-50 text-gray-900 font-sans app-container">
       {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto overflow-x-hidden pb-24 safe-area-inset">
+      <main
+        className={cn(
+          "flex-1 overflow-y-auto overflow-x-hidden safe-area-inset",
+          !isLoginPage && "pb-24",
+        )}
+      >
         {children}
       </main>
 
       {/* Bottom Navigation */}
-      <BottomNavigation />
+      {!isLoginPage && <BottomNavigation />}
     </div>
   );
 }
@@ -89,10 +104,7 @@ function BottomNavigation() {
                   "text-gray-400 hover:text-gray-600",
                 )}
               >
-                <Icon
-                  className="size-6 transition-colors"
-                  strokeWidth={2}
-                />
+                <Icon className="size-6 transition-colors" strokeWidth={2} />
                 <span className="text-[10px] font-medium tracking-wide">
                   {item.label}
                 </span>

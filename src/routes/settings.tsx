@@ -1,12 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "../contexts/AuthContext";
+import { useFeature } from "../hooks/useFeature";
 import { Button } from "../components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "../components/ui/card";
 import {
   User,
   Settings as SettingsIcon,
@@ -21,15 +16,18 @@ import {
   Briefcase,
   Truck,
 } from "lucide-react";
-import { cn } from "../lib/utils";
+import { requireFeature } from "../lib/auth";
 
 export const Route = createFileRoute("/settings")({
+  beforeLoad: requireFeature("settings"),
   component: SettingsPage,
 });
 
 function SettingsPage() {
   const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
+  const canManageUsers = useFeature("userManagement");
+  const canManageTrips = useFeature("adminTrips");
 
   return (
     <div className="min-h-screen bg-gray-50 pb-36 overflow-y-auto safe-area-inset">
@@ -157,43 +155,47 @@ function SettingsPage() {
         </section>
 
         {/* Admin only */}
-        {currentUser?.role === "ADMIN" && (
+        {(canManageUsers || canManageTrips) && (
           <section>
             <h2 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-3 ml-2 flex items-center gap-2">
               <SettingsIcon className="size-4" /> Administration
             </h2>
             <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100 divide-y divide-gray-50">
-              <Link
-                to="/users"
-                className="flex items-center gap-4 p-4 hover:bg-gray-50 active:bg-gray-100 transition-colors"
-              >
-                <div className="bg-indigo-100 p-2 rounded-lg text-indigo-600">
-                  <Users className="size-5" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-medium text-gray-900">User Management</h3>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    Create & manage accounts
-                  </p>
-                </div>
-                <ChevronRight className="size-5 text-gray-300" />
-              </Link>
+              {canManageUsers && (
+                <Link
+                  to="/users"
+                  className="flex items-center gap-4 p-4 hover:bg-gray-50 active:bg-gray-100 transition-colors"
+                >
+                  <div className="bg-indigo-100 p-2 rounded-lg text-indigo-600">
+                    <Users className="size-5" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-medium text-gray-900">User Management</h3>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      Create & manage accounts
+                    </p>
+                  </div>
+                  <ChevronRight className="size-5 text-gray-300" />
+                </Link>
+              )}
 
-              <Link
-                to="/admin-trips"
-                className="flex items-center gap-4 p-4 hover:bg-gray-50 active:bg-gray-100 transition-colors"
-              >
-                <div className="bg-violet-100 p-2 rounded-lg text-violet-600">
-                  <Truck className="size-5" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-medium text-gray-900">Trip Management</h3>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    Approve & monitor trips
-                  </p>
-                </div>
-                <ChevronRight className="size-5 text-gray-300" />
-              </Link>
+              {canManageTrips && (
+                <Link
+                  to="/admin-trips"
+                  className="flex items-center gap-4 p-4 hover:bg-gray-50 active:bg-gray-100 transition-colors"
+                >
+                  <div className="bg-violet-100 p-2 rounded-lg text-violet-600">
+                    <Truck className="size-5" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-medium text-gray-900">Trip Management</h3>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      Approve & monitor trips
+                    </p>
+                  </div>
+                  <ChevronRight className="size-5 text-gray-300" />
+                </Link>
+              )}
             </div>
           </section>
         )}
