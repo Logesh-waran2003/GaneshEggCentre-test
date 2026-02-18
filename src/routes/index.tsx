@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Card, CardContent } from "../components/ui/card";
 import { EggLoader } from "../components/ui/EggLoader";
 
-import { TrendingUp, ShoppingCart, Package } from "lucide-react";
+import { TrendingUp, ShoppingCart, Package, Users, Truck, Receipt, BarChart3, ShoppingBag, Wallet } from "lucide-react";
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { api } from "../../convex/_generated/api";
@@ -41,7 +41,7 @@ function Home() {
   );
 
   return (
-    <div className="p-4 safe-area-inset flex flex-col gap-6 max-w-md mx-auto min-h-screen pb-32">
+    <div className="p-4 safe-area-inset flex flex-col gap-6 max-w-md mx-auto pb-8">
       {/* Header */}
       <header className="flex justify-between items-center py-4">
         <div>
@@ -119,6 +119,67 @@ function Home() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Quick Actions */}
+      <section>
+        <h2 className="text-lg font-bold text-gray-800 mb-3">Quick Actions</h2>
+        <div className="grid grid-cols-3 gap-3">
+          <Link
+            to="/sales/new"
+            className="flex flex-col items-center gap-2 p-4 bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-gray-100"
+          >
+            <div className="bg-indigo-100 p-3 rounded-full">
+              <ShoppingBag className="size-6 text-indigo-600" />
+            </div>
+            <span className="text-xs font-bold text-gray-700 text-center">New Sale</span>
+          </Link>
+          <Link
+            to="/contacts"
+            className="flex flex-col items-center gap-2 p-4 bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-gray-100"
+          >
+            <div className="bg-blue-100 p-3 rounded-full">
+              <Users className="size-6 text-blue-600" />
+            </div>
+            <span className="text-xs font-bold text-gray-700 text-center">Contacts</span>
+          </Link>
+          <Link
+            to="/trips"
+            className="flex flex-col items-center gap-2 p-4 bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-gray-100"
+          >
+            <div className="bg-purple-100 p-3 rounded-full">
+              <Truck className="size-6 text-purple-600" />
+            </div>
+            <span className="text-xs font-bold text-gray-700 text-center">Trips</span>
+          </Link>
+          <Link
+            to="/inventory"
+            className="flex flex-col items-center gap-2 p-4 bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-gray-100"
+          >
+            <div className="bg-amber-100 p-3 rounded-full">
+              <BarChart3 className="size-6 text-amber-600" />
+            </div>
+            <span className="text-xs font-bold text-gray-700 text-center">Stock</span>
+          </Link>
+          <Link
+            to="/expenses"
+            className="flex flex-col items-center gap-2 p-4 bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-gray-100"
+          >
+            <div className="bg-rose-100 p-3 rounded-full">
+              <Receipt className="size-6 text-rose-600" />
+            </div>
+            <span className="text-xs font-bold text-gray-700 text-center">Expenses</span>
+          </Link>
+          <Link
+            to="/ledger"
+            className="flex flex-col items-center gap-2 p-4 bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-gray-100"
+          >
+            <div className="bg-green-100 p-3 rounded-full">
+              <Wallet className="size-6 text-green-600" />
+            </div>
+            <span className="text-xs font-bold text-gray-700 text-center">Ledger</span>
+          </Link>
+        </div>
+      </section>
 
       {/* Rates Section */}
       <section>

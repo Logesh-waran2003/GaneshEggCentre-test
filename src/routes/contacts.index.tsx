@@ -5,10 +5,8 @@ import { Card, CardContent } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
 import { ArrowLeft, Phone, Search, UserCircle, Plus } from "lucide-react";
 import { useState } from "react";
-import { convexQuery } from "@convex-dev/react-query";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { useMutation } from "convex/react";
-import { api } from "../../convex/_generated/api";
+import { useContacts, useCreateContact } from "../api/contacts";
+import { Contact } from "../types/contact";
 import { cn } from "../lib/utils";
 
 export const Route = createFileRoute("/contacts/")({
@@ -16,10 +14,8 @@ export const Route = createFileRoute("/contacts/")({
 });
 
 function Contacts() {
-  const { data: contacts } = useSuspenseQuery(
-    convexQuery(api.contacts.getContacts, {}),
-  );
-  const createContact = useMutation(api.contacts.createContact);
+  const { data: contacts } = useContacts();
+  const createContact = useCreateContact();
 
   const [isAdding, setIsAdding] = useState(false);
   const [search, setSearch] = useState("");
@@ -31,7 +27,7 @@ function Contacts() {
   const [newAdjustment, setNewAdjustment] = useState("0");
 
   const filteredContacts = contacts.filter(
-    (c: any) =>
+    (c: Contact) =>
       c.name.toLowerCase().includes(search.toLowerCase()) ||
       (c.phone && c.phone.includes(search)),
   );
@@ -56,7 +52,7 @@ function Contacts() {
   };
 
   return (
-    <div className="p-4 safe-area-inset flex flex-col gap-6 max-w-md mx-auto min-h-screen pb-32">
+    <div className="p-4 safe-area-inset flex flex-col gap-6 max-w-md mx-auto pb-32">
       <header className="flex items-center justify-between py-4">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" asChild className="rounded-2xl">
@@ -151,7 +147,7 @@ function Contacts() {
       </div>
 
       <div className="flex flex-col gap-3">
-        {filteredContacts.map((contact: any) => (
+        {filteredContacts.map((contact: Contact) => (
           <Link
             key={contact._id}
             to="/contacts/$contactId"

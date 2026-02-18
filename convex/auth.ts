@@ -1,6 +1,5 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { Id } from "./_generated/dataModel";
 
 const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
 
