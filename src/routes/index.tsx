@@ -3,9 +3,9 @@ import { Card, CardContent } from "../components/ui/card";
 import { EggLoader } from "../components/ui/EggLoader";
 
 import { TrendingUp, ShoppingCart, Package, Users, Truck, Receipt, BarChart3, ShoppingBag, Wallet } from "lucide-react";
-import { convexQuery } from "@convex-dev/react-query";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { api } from "../../convex/_generated/api";
+import { useDashboardStats } from "../api/transactions";
+import { useTodayRates } from "../api/rates";
+import { useProducts } from "../api/products";
 import { requireAuth } from "../lib/auth";
 
 export const Route = createFileRoute("/")({
@@ -20,15 +20,9 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
-  const { data: stats } = useSuspenseQuery(
-    convexQuery(api.transactions.getDashboardStats, {}),
-  );
-  const { data: rates } = useSuspenseQuery(
-    convexQuery(api.rates.getTodayRates, {}),
-  );
-  const { data: products } = useSuspenseQuery(
-    convexQuery(api.products.getProducts, {}),
-  );
+  const { data: stats } = useDashboardStats();
+  const { data: rates } = useTodayRates();
+  const { data: products } = useProducts();
   const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
   
   const today = new Date();
