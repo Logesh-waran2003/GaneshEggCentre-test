@@ -4,13 +4,13 @@ import { Input } from "../components/ui/input";
 import { Card, CardContent } from "../components/ui/card";
 import { ArrowLeft, Plus, Trash2, Receipt } from "lucide-react";
 import { useState } from "react";
-import { convexQuery } from "@convex-dev/react-query";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { useMutation } from "convex/react";
-import { api } from "../../convex/_generated/api";
+import { useExpenses, useCreateExpense, useDeleteExpense } from "../api/expenses";
+import { useListActiveEmployees } from "../api/users";
+import type { Id } from "../../convex/_generated/dataModel";
 import { useAuth } from "../contexts/AuthContext";
 import { useFeature } from "../hooks/useFeature";
 import { requireAuth } from "../lib/auth";
+import { InlineSelect } from "../components/shared/InlineSelect";
 
 export const Route = createFileRoute("/expenses")({
   beforeLoad: requireAuth,
@@ -29,17 +29,10 @@ function Expenses() {
   const [filterEmployee, setFilterEmployee] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { data: expenses } = useSuspenseQuery(
-    convexQuery(api.expenses.listExpenses, {
-      token: token!,
-      employeeId: filterEmployee || undefined,
-    })
-  );
-  const { data: users } = useSuspenseQuery(
-    convexQuery(api.users.listUsers, { token: token! })
-  );
-  const createExpense = useMutation(api.expenses.createExpense);
-  const deleteExpense = useMutation(api.expenses.deleteExpense);
+  const { data: expenses } = useExpenses(token!, filterEmployee ? (filterEmployee as Id<"users">) : undefined);
+  const { data: users } = useListActiveEmployees();
+  const createExpense = useCreateExpense();
+  const deleteExpense = useDeleteExpense();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,7 +48,7 @@ function Expenses() {
         amount: parseFloat(amount),
         date: selectedDate.getTime(),
         description,
-        employeeId: selectedEmployee || undefined,
+        employeeId: selectedEmployee ? (selectedEmployee as Id<"users">) : undefined,
       });
       setAmount("");
       setDate(new Date().toISOString().split('T')[0]);
@@ -79,7 +72,7 @@ function Expenses() {
     }
   };
 
-  const todayTotal = expenses
+  const todayTotal = (expenses ?? [])
     .filter((e) => {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -110,22 +103,20 @@ function Expenses() {
         </CardContent>
       </Card>
 
-      <div className="flex gap-3">
-        <select
-          value={filterEmployee}
-          onChange={(e) => setFilterEmployee(e.target.value)}
-          className="flex-1 h-12 px-4 rounded-2xl border-none bg-white shadow-sm"
-        >
-          <option value="">All Employees</option>
-          {users.map((u) => (
-            <option key={u._id} value={u._id}>
-              {u.name}
-            </option>
-          ))}
-        </select>
+      <div className="flex gap-3 items-start">
+        <div className="flex-1">
+          <InlineSelect
+            value={filterEmployee}
+            onChange={setFilterEmployee}
+            options={[
+              { value: "", label: "All Employees" },
+              ...users.map((u) => ({ value: u._id, label: u.name })),
+            ]}
+          />
+        </div>
         <Button
           onClick={() => setShowForm(!showForm)}
-          className="h-12 rounded-2xl"
+          className="h-12 rounded-2xl shrink-0"
         >
           <Plus className="size-5" />
         </Button>
@@ -178,18 +169,14 @@ function Expenses() {
                 <label className="text-xs font-bold text-gray-400 uppercase tracking-widest block ml-1 mb-2">
                   Employee (Optional)
                 </label>
-                <select
+                <InlineSelect
                   value={selectedEmployee}
-                  onChange={(e) => setSelectedEmployee(e.target.value)}
-                  className="w-full h-12 px-4 rounded-2xl border-none bg-gray-50"
-                >
-                  <option value="">General Expense</option>
-                  {users.map((u) => (
-                    <option key={u._id} value={u._id}>
-                      {u.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={setSelectedEmployee}
+                  options={[
+                    { value: "", label: "General Expense" },
+                    ...users.map((u) => ({ value: u._id, label: u.name })),
+                  ]}
+                />
               </div>
               <div className="flex gap-2">
                 <Button 
@@ -214,7 +201,7 @@ function Expenses() {
       )}
 
       <div className="space-y-3">
-        {expenses.length === 0 ? (
+        {(expenses ?? []).length === 0 ? (
           <Card className="border-none shadow-sm">
             <CardContent className="p-8 text-center">
               <Receipt className="size-12 mx-auto text-gray-300 mb-3" />
@@ -223,7 +210,7 @@ function Expenses() {
             </CardContent>
           </Card>
         ) : (
-          expenses.map((expense) => {
+          (expenses ?? []).map((expense) => {
             const canDelete = canDeleteAny || (canDeleteOwn && expense.employeeId === currentUser?._id);
             return (
           <Card key={expense._id} className="border-none shadow-sm">

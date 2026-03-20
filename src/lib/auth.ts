@@ -11,11 +11,19 @@ export function requireAuth() {
 }
 
 export function requireAdmin() {
-  requireAuth();
-  // Additional admin check can be done in component level
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("auth_token");
+    if (!token) {
+      throw redirect({ to: "/login" });
+    }
+    const role = localStorage.getItem("user_role");
+    if (role !== "ADMIN") {
+      throw redirect({ to: "/" });
+    }
+  }
 }
 
-export function requireFeature(feature: FeatureName) {
+export function requireFeature(_feature: FeatureName) {
   return () => {
     requireAuth();
     // Feature check will be done at component level with useFeature hook

@@ -65,7 +65,7 @@ export const approveStartTrip = mutation({
     tripId: v.id("saleTrips"),
   },
   handler: async (ctx, args) => {
-    const admin = await requireAdmin(ctx, args.token);
+    await requireAdmin(ctx, args.token);
 
     const trip = await ctx.db.get(args.tripId);
     if (!trip) throw new Error("Trip not found");

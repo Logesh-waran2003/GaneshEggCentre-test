@@ -1,7 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { useQuery, useMutation } from "convex/react";
-import { api } from "../../convex/_generated/api";
 import { useAuth } from "../contexts/AuthContext";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -19,9 +17,9 @@ import {
   ShieldCheck,
   PlusCircle,
   X,
-  Check,
   User,
 } from "lucide-react";
+import { useListUsers, useCreateUser, useToggleUserActive } from "../api/users";
 
 export const Route = createFileRoute("/users")({
   beforeLoad: requireFeature("userManagement"),
@@ -36,9 +34,9 @@ function UsersPage() {
   const [name, setName] = useState("");
   const [role, setRole] = useState<"ADMIN" | "EMPLOYEE">("EMPLOYEE");
 
-  const users = useQuery(api.users.listUsers, token ? { token } : "skip");
-  const createUser = useMutation(api.users.createUser);
-  const toggleActive = useMutation(api.users.toggleUserActive);
+  const { data: users } = useListUsers(token!);
+  const createUser = useCreateUser();
+  const toggleActive = useToggleUserActive();
 
   if (currentUser?.role !== "ADMIN") {
     // Better access denied UI
@@ -233,7 +231,7 @@ function UsersPage() {
 
         {/* Users Grid */}
         <div className="grid gap-4 md:grid-cols-2">
-          {users?.map((user) => (
+          {users.map((user) => (
             <Card
               key={user._id}
               className="border-none shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden bg-white rounded-2xl"

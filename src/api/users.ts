@@ -3,6 +3,10 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 
+export function useListActiveEmployees() {
+  return useSuspenseQuery(convexQuery(api.users.listActiveEmployees, {}));
+}
+
 export function useListUsers(token: string) {
   return useSuspenseQuery(convexQuery(api.users.listUsers, { token }));
 }

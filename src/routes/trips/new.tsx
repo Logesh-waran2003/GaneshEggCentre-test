@@ -4,12 +4,14 @@ import { Input } from "../../components/ui/input";
 import { Card, CardContent } from "../../components/ui/card";
 import { ArrowLeft, Check } from "lucide-react";
 import { useState } from "react";
-import { convexQuery } from "@convex-dev/react-query";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { useMutation } from "convex/react";
-import { api } from "../../../convex/_generated/api";
 import { useAuth } from "../../contexts/AuthContext";
 import { requireAuth } from "../../lib/auth";
+import { useProducts } from "../../api/products";
+import { useListActiveEmployees } from "../../api/users";
+import { useCreateTrip } from "../../api/trips";
+import { Product } from "../../types/product";
+import { Id } from "../../../convex/_generated/dataModel";
+import { InlineSelect } from "../../components/shared/InlineSelect";
 
 export const Route = createFileRoute("/trips/new")({
   beforeLoad: requireAuth,
@@ -20,24 +22,20 @@ function NewTrip() {
   const { token } = useAuth();
   
   if (!token) return null;
-  const { data: products } = useSuspenseQuery(
-    convexQuery(api.products.getProducts, {})
-  );
-  const { data: users } = useSuspenseQuery(
-    convexQuery(api.users.listUsers, { token: token! })
-  );
-  const createTrip = useMutation(api.saleTrips.createTrip);
+  const { data: products } = useProducts();
+  const { data: users } = useListActiveEmployees();
+  const createTrip = useCreateTrip();
   const router = useRouter();
 
-  const [productId, setProductId] = useState("");
-  const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
+  const [productId, setProductId] = useState<Id<"products"> | "">("");
+  const [selectedEmployees, setSelectedEmployees] = useState<Id<"users">[]>([]);
   const [loadedTrays, setLoadedTrays] = useState("");
   const [loadedLoose, setLoadedLoose] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const employees = users.filter((u: any) => u.role === "EMPLOYEE" && u.isActive);
+  const employees = users.filter((u) => u.role === "EMPLOYEE");
 
-  const toggleEmployee = (userId: string) => {
+  const toggleEmployee = (userId: Id<"users">) => {
     setSelectedEmployees((prev) =>
       prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]
     );
@@ -53,8 +51,8 @@ function NewTrip() {
     try {
       await createTrip({
         token: token!,
-        productId: productId as any,
-        employees: selectedEmployees as any,
+        productId: productId as Id<"products">,
+        employees: selectedEmployees,
         loadedQtyTrays: Number(loadedTrays),
         loadedQtyLoose: Number(loadedLoose) || 0,
       });
@@ -67,7 +65,7 @@ function NewTrip() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="bg-gray-50 pb-24">
       <div className="p-4 max-w-md mx-auto">
         <header className="flex items-center gap-4 py-4">
           <Button variant="ghost" size="icon" asChild className="rounded-2xl">
@@ -83,18 +81,16 @@ function NewTrip() {
             <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block ml-1">
               Product
             </label>
-            <select
+            <InlineSelect
               value={productId}
-              onChange={(e) => setProductId(e.target.value)}
-              className="w-full h-14 bg-white border-none rounded-2xl shadow-sm px-4 font-bold"
-            >
-              <option value="">Select product</option>
-              {products.map((p: any) => (
-                <option key={p._id} value={p._id}>
-                  {p.name} Egg (Stock: {p.currentStockQtyTrays}T + {p.currentStockQtyLoose}L)
-                </option>
-              ))}
-            </select>
+              onChange={(v) => setProductId(v as Id<"products"> | "")}
+              placeholder="Select a product"
+              options={products.map((p: Product) => ({
+                value: p._id,
+                label: p.name,
+                sublabel: `Stock: ${p.currentStockQtyTrays}T + ${p.currentStockQtyLoose}L`,
+              }))}
+            />
           </div>
 
           <div>
@@ -102,7 +98,7 @@ function NewTrip() {
               Employees
             </label>
             <div className="space-y-2">
-              {employees.map((emp: any) => (
+              {employees.map((emp) => (
                 <Card
                   key={emp._id}
                   className={`cursor-pointer transition-all ${

@@ -3,11 +3,10 @@ import { Button } from "../../components/ui/button";
 import { Card, CardContent } from "../../components/ui/card";
 import { Badge } from "../../components/ui/badge";
 import { Plus, Truck, Users } from "lucide-react";
-import { convexQuery } from "@convex-dev/react-query";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { api } from "../../../convex/_generated/api";
 import { useAuth } from "../../contexts/AuthContext";
 import { requireAuth } from "../../lib/auth";
+import { useTodayTrips } from "../../api/trips";
+import { TripWithDetails } from "../../types/trip";
 
 export const Route = createFileRoute("/trips/")({
   beforeLoad: requireAuth,
@@ -18,9 +17,7 @@ function TripsList() {
   const { token } = useAuth();
   
   if (!token) return null;
-  const { data: trips } = useSuspenseQuery(
-    convexQuery(api.saleTrips.getTodayTrips, { token: token! })
-  );
+  const { data: trips } = useTodayTrips(token);
 
   const statusColors = {
     PENDING_APPROVAL: "bg-amber-100 text-amber-700",
@@ -30,7 +27,7 @@ function TripsList() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="bg-gray-50 pb-24">
       <div className="p-4 max-w-md mx-auto">
         <header className="py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-indigo-950">Sale Trips</h1>
@@ -42,8 +39,8 @@ function TripsList() {
         </header>
 
         <div className="space-y-3">
-          {trips.map((trip: any) => (
-            <Link key={trip._id} to="/trips/$tripId" params={{ tripId: trip._id }}>
+          {(trips ?? []).map((trip: TripWithDetails) => (
+            <Link key={trip._id} to="/trips/$tripId" params={{ tripId: trip._id as string }}>
               <Card className="hover:shadow-lg transition-shadow">
                 <CardContent className="p-4">
                   <div className="flex justify-between items-start mb-3">
@@ -69,14 +66,14 @@ function TripsList() {
 
                   <div className="mt-3 flex items-center gap-2 text-xs text-gray-600">
                     <Users className="size-4" />
-                    {trip.employeeDetails?.map((e: any) => e?.name).join(", ")}
+                    {trip.employeeDetails?.map(e => e?.name).join(", ")}
                   </div>
                 </CardContent>
               </Card>
             </Link>
           ))}
 
-          {trips.length === 0 && (
+          {(trips ?? []).length === 0 && (
             <div className="text-center py-12 bg-white/50 rounded-3xl border-2 border-dashed border-gray-200">
               <Truck className="size-12 mx-auto text-gray-300 mb-3" />
               <p className="text-gray-400 text-sm font-medium">No trips today</p>

@@ -1,7 +1,11 @@
 import { SaleItem } from "../types";
 
 export function calculateSaleTotal(items: SaleItem[]): number {
-  return items.reduce((sum, item) => sum + item.amount, 0);
+  return items.reduce((sum, item) => {
+    const trayAmount = item.qtyTrays * item.rateApplied;
+    const looseAmount = item.qtyLoose * item.rateApplied;
+    return sum + trayAmount + looseAmount;
+  }, 0);
 }
 
 export function calculateSaleItemAmount(quantity: number, rate: number): number {

@@ -16,12 +16,10 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { format } from "date-fns";
-import { convexQuery } from "@convex-dev/react-query";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { useMutation } from "convex/react";
-import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
 import { useState } from "react";
+import { useContactById, useUpdateContact } from "../api/contacts";
+import { useContactTransactions } from "../api/transactions";
 
 export const Route = createFileRoute("/contacts/$contactId")({
   component: ContactDetail,
@@ -29,21 +27,13 @@ export const Route = createFileRoute("/contacts/$contactId")({
 
 function ContactDetail() {
   const { contactId } = Route.useParams();
-  const { data: contact } = useSuspenseQuery(
-    convexQuery(api.contacts.getContactById, {
-      id: contactId as Id<"contacts">,
-    }),
-  );
-  const { data: transactions } = useSuspenseQuery(
-    convexQuery(api.transactions.getContactTransactions, {
-      contactId: contactId as Id<"contacts">,
-    }),
-  );
+  const { data: contact } = useContactById(contactId as Id<"contacts">);
+  const { data: transactions } = useContactTransactions(contactId as Id<"contacts">);
 
   const [editingAdjustment, setEditingAdjustment] = useState(false);
   const [adjustment, setAdjustment] = useState("");
   const [expandedTx, setExpandedTx] = useState<string | null>(null);
-  const updateContact = useMutation(api.contacts.updateContact);
+  const updateContact = useUpdateContact();
 
   const handleSaveAdjustment = async () => {
     await updateContact({

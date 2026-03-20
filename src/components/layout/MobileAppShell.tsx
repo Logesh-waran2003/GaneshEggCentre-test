@@ -249,6 +249,7 @@ function BottomNavigation({ onMenuClick }: { onMenuClick: () => void }) {
             <div className="grid grid-cols-3 gap-3">
               <Link 
                 to="/sales/new"
+                search={{ tripId: undefined }}
                 className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-indigo-50 transition-colors"
                 onClick={() => setShowQuickActions(false)}
               >

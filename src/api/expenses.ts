@@ -1,5 +1,5 @@
 import { convexQuery } from "@convex-dev/react-query";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
@@ -18,8 +18,15 @@ export function useDeleteExpense() {
   return useMutation(api.expenses.deleteExpense);
 }
 
-export function useEmployeeExpenses(employeeId: Id<"users">, startDate: number, endDate: number) {
+export function useEmployeeExpenses(token: string, employeeId: Id<"users">, startDate: number, endDate: number) {
   return useSuspenseQuery(
-    convexQuery(api.expenses.getEmployeeExpenses, { employeeId, startDate, endDate })
+    convexQuery(api.expenses.getEmployeeExpenses, { token, employeeId, startDate, endDate })
   );
+}
+
+export function useDailyExpenseTotal(token: string | null, date: number, employeeId?: Id<"users">) {
+  return useQuery({
+    ...convexQuery(api.expenses.getDailyTotal, { token: token ?? "", date, employeeId }),
+    enabled: !!token,
+  });
 }

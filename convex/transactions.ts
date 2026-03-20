@@ -1,8 +1,22 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 
+async function requireAuth(ctx: any, token: string) {
+  const session = await ctx.db
+    .query("sessions")
+    .withIndex("by_token", (q: any) => q.eq("token", token))
+    .first();
+  if (!session || session.expiresAt < Date.now()) {
+    throw new Error("Unauthorized");
+  }
+  const user = await ctx.db.get(session.userId);
+  if (!user || !user.isActive) throw new Error("Unauthorized");
+  return user;
+}
+
 export const createTransaction = mutation({
   args: {
+    token: v.string(),
     contactId: v.id("contacts"),
     type: v.union(
       v.literal("SALE"),
@@ -28,13 +42,9 @@ export const createTransaction = mutation({
     ),
   },
   handler: async (ctx, args) => {
-    console.log("createTransaction called with:", {
-      type: args.type,
-      amount: args.amount,
-      cashCollected: args.cashCollected,
-    });
+    const user = await requireAuth(ctx, args.token);
 
-    // 1. Create Sale Transaction
+    // 1. Create transaction
     const transactionId = await ctx.db.insert("transactions", {
       contactId: args.contactId,
       type: args.type,
@@ -43,21 +53,20 @@ export const createTransaction = mutation({
       description: args.description,
       cashCollected: args.cashCollected,
       salesTripId: args.salesTripId,
+      createdBy: user._id,
     });
-    console.log("Created transaction:", transactionId);
 
-    // 2. If cash collected, create separate PAYMENT_IN transaction
+    // 2. If cash collected on SALE, create PAYMENT_IN
     if (args.type === "SALE" && args.cashCollected && args.cashCollected > 0) {
-      console.log("Creating PAYMENT_IN for cash:", args.cashCollected);
-      const paymentId = await ctx.db.insert("transactions", {
+      await ctx.db.insert("transactions", {
         contactId: args.contactId,
         type: "PAYMENT_IN",
         amount: args.cashCollected,
         date: args.date,
         description: `Cash collected for sale`,
         relatedTransactionId: transactionId,
+        createdBy: user._id,
       });
-      console.log("Created PAYMENT_IN transaction:", paymentId);
     }
 
     // 3. Handle Items and Stock

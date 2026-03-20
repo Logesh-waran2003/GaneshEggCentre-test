@@ -66,7 +66,7 @@ function SettingsPage() {
               size="xl"
               className="h-28 flex-col gap-3 bg-white text-indigo-950 hover:bg-indigo-50 border-0 shadow-sm rounded-2xl"
             >
-              <Link to="/sales/new">
+              <Link to="/sales/new" search={{ tripId: undefined }}>
                 <div className="bg-indigo-100 p-2.5 rounded-xl">
                   <ShoppingBag className="size-6 text-indigo-600" />
                 </div>

@@ -1,4 +1,6 @@
 import { Id } from "../../convex/_generated/dataModel";
+import { Product } from "./product";
+import { User } from "./user";
 
 export type TripStatus = "PENDING_APPROVAL" | "IN_PROGRESS" | "COMPLETED" | "APPROVED";
 
@@ -23,4 +25,9 @@ export interface Trip {
   approvedAt?: number;
   approvedBy?: Id<"users">;
   _creationTime: number;
+}
+
+export interface TripWithDetails extends Trip {
+  product: Product | null;
+  employeeDetails: (User | null)[];
 }

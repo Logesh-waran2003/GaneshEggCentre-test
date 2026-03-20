@@ -3,48 +3,45 @@ import { Card, CardContent } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { Truck, CheckCircle } from "lucide-react";
-import { convexQuery } from "@convex-dev/react-query";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { useMutation } from "convex/react";
-import { api } from "../../convex/_generated/api";
 import { useAuth } from "../contexts/AuthContext";
-import { requireFeature } from "../lib/auth";
+import { requireAdmin } from "../lib/auth";
+import { useTodayTrips, useApproveStartTrip, useApproveEndTrip } from "../api/trips";
+import { TripWithDetails } from "../types/trip";
+import { Id } from "../../convex/_generated/dataModel";
 
 export const Route = createFileRoute("/admin-trips")({
-  beforeLoad: requireFeature("adminTrips"),
+  beforeLoad: requireAdmin,
   component: AdminTrips,
 });
 
 function AdminTrips() {
   const { token } = useAuth();
-  const { data: trips } = useSuspenseQuery(
-    convexQuery(api.saleTrips.getTodayTrips, { token: token! })
-  );
-  const approveStart = useMutation(api.saleTrips.approveStartTrip);
-  const approveEnd = useMutation(api.saleTrips.approveEndTrip);
+  const { data: trips } = useTodayTrips(token!);
+  const approveStart = useApproveStartTrip();
+  const approveEnd = useApproveEndTrip();
 
-  const pendingApproval = trips.filter((t: any) => t.status === "PENDING_APPROVAL");
-  const inProgress = trips.filter((t: any) => t.status === "IN_PROGRESS");
-  const completed = trips.filter((t: any) => t.status === "COMPLETED");
+  const pendingApproval = (trips ?? []).filter((t: TripWithDetails) => t.status === "PENDING_APPROVAL");
+  const inProgress = (trips ?? []).filter((t: TripWithDetails) => t.status === "IN_PROGRESS");
+  const completed = (trips ?? []).filter((t: TripWithDetails) => t.status === "COMPLETED");
 
-  const handleApproveStart = async (tripId: string) => {
+  const handleApproveStart = async (tripId: Id<"saleTrips">) => {
     try {
-      await approveStart({ token: token!, tripId: tripId as any });
+      await approveStart({ token: token!, tripId });
     } catch (err) {
       alert((err as Error).message);
     }
   };
 
-  const handleApproveEnd = async (tripId: string) => {
+  const handleApproveEnd = async (tripId: Id<"saleTrips">) => {
     try {
-      await approveEnd({ token: token!, tripId: tripId as any });
+      await approveEnd({ token: token!, tripId });
     } catch (err) {
       alert((err as Error).message);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="bg-gray-50 pb-24">
       <div className="p-4 max-w-2xl mx-auto">
         <header className="py-4">
           <h1 className="text-2xl font-bold text-indigo-950">Trip Management</h1>
@@ -172,7 +169,7 @@ function AdminTrips() {
           </section>
         )}
 
-        {trips.length === 0 && (
+        {(trips ?? []).length === 0 && (
           <div className="text-center py-12 bg-white/50 rounded-3xl border-2 border-dashed border-gray-200">
             <Truck className="size-12 mx-auto text-gray-300 mb-3" />
             <p className="text-gray-400 text-sm font-medium">No trips today</p>

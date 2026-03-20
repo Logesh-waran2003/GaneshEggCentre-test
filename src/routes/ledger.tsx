@@ -12,12 +12,12 @@ import {
   Check,
 } from "lucide-react";
 import { useState } from "react";
-import { convexQuery } from "@convex-dev/react-query";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { useMutation } from "convex/react";
-import { api } from "../../convex/_generated/api";
 import { cn } from "../lib/utils";
 import { requireAuth } from "../lib/auth";
+import { useAuth } from "../contexts/AuthContext";
+import { useContacts } from "../api/contacts";
+import { useCreateTransaction } from "../api/transactions";
+import { Contact } from "../types/contact";
 
 export const Route = createFileRoute("/ledger")({
   beforeLoad: requireAuth,
@@ -25,21 +25,20 @@ export const Route = createFileRoute("/ledger")({
 });
 
 function Ledger() {
-  const { data: contacts } = useSuspenseQuery(
-    convexQuery(api.contacts.getContacts, {}),
-  );
-  const createTransaction = useMutation(api.transactions.createTransaction);
+  const { token } = useAuth();
+  const { data: contacts } = useContacts();
+  const createTransaction = useCreateTransaction();
 
   const [search, setSearch] = useState("");
-  const [selectedContact, setSelectedContact] = useState<any>(null);
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentMode, setPaymentMode] = useState<"Cash" | "UPI">("Cash");
   const [remarks, setRemarks] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const sortedContacts = contacts
-    .filter((c: any) => c.name.toLowerCase().includes(search.toLowerCase()))
-    .sort((a: any, b: any) => b.currentBalance - a.currentBalance);
+    .filter((c: Contact) => c.name.toLowerCase().includes(search.toLowerCase()))
+    .sort((a: Contact, b: Contact) => b.currentBalance - a.currentBalance);
 
   const handleRecordPayment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,6 +47,7 @@ function Ledger() {
     setIsSubmitting(true);
     try {
       await createTransaction({
+        token: token!,
         contactId: selectedContact._id,
         type: "PAYMENT_IN",
         amount: parseFloat(paymentAmount),
@@ -66,7 +66,7 @@ function Ledger() {
   };
 
   return (
-    <div className="p-4 safe-area-inset flex flex-col gap-6 max-w-md mx-auto min-h-screen pb-48">
+    <div className="p-4 safe-area-inset flex flex-col gap-6 max-w-md mx-auto pb-48">
       <header className="flex items-center gap-4 py-4">
         <Button variant="ghost" size="icon" asChild className="rounded-2xl">
           <Link to="/">
@@ -111,7 +111,7 @@ function Ledger() {
           </div>
 
           <div className="flex flex-col gap-3">
-            {sortedContacts.map((contact: any) => (
+            {sortedContacts.map((contact: Contact) => (
               <Card
                 key={contact._id}
                 className="border-none shadow-sm active:scale-[0.98] transition-all cursor-pointer overflow-visible"
@@ -186,7 +186,7 @@ function Ledger() {
                     >
                       <Link
                         to="/contacts/$contactId"
-                        params={{ contactId: selectedContact._id }}
+                        params={{ contactId: selectedContact._id as string }}
                       >
                         View Full History →
                       </Link>
@@ -239,11 +239,11 @@ function Ledger() {
                           color: "text-blue-500",
                           bg: "bg-blue-50",
                         },
-                      ].map((mode: any) => (
+                      ].map((mode) => (
                         <button
                           key={mode.id}
                           type="button"
-                          onClick={() => setPaymentMode(mode.id)}
+                          onClick={() => setPaymentMode(mode.id as "Cash" | "UPI")}
                           className={cn(
                             "flex flex-col items-center gap-2 p-4 rounded-3xl transition-all border-2",
                             paymentMode === mode.id

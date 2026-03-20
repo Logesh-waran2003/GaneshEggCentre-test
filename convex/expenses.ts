@@ -108,11 +108,14 @@ export const listExpenses = query({
 
 export const getEmployeeExpenses = query({
   args: {
+    token: v.string(),
     employeeId: v.id("users"),
     startDate: v.number(),
     endDate: v.number(),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx, args.token);
+
     const expenses = await ctx.db
       .query("expenses")
       .withIndex("by_employee", (q) => q.eq("employeeId", args.employeeId))
@@ -156,10 +159,12 @@ export const deleteExpense = mutation({
 
 export const getDailyTotal = query({
   args: {
+    token: v.string(),
     date: v.number(),
     employeeId: v.optional(v.id("users")),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx, args.token);
     const startOfDay = new Date(args.date);
     startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date(args.date);

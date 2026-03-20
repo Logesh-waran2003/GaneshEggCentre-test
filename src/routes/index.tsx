@@ -1,12 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Card, CardContent } from "../components/ui/card";
 import { EggLoader } from "../components/ui/EggLoader";
-
 import { TrendingUp, ShoppingCart, Package, Users, Truck, Receipt, BarChart3, ShoppingBag, Wallet } from "lucide-react";
 import { useDashboardStats } from "../api/transactions";
 import { useTodayRates } from "../api/rates";
 import { useProducts } from "../api/products";
+import { useDailyExpenseTotal } from "../api/expenses";
 import { requireAuth } from "../lib/auth";
+import { useAuth } from "../contexts/AuthContext";
 
 export const Route = createFileRoute("/")({
   beforeLoad: requireAuth,
@@ -20,19 +21,14 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
+  const { token } = useAuth();
   const { data: stats } = useDashboardStats();
   const { data: rates } = useTodayRates();
   const { data: products } = useProducts();
-  const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
-  
+
   const today = new Date();
   today.setHours(12, 0, 0, 0);
-  
-  const { data: todayExpenses } = useSuspenseQuery(
-    convexQuery(api.expenses.getDailyTotal, {
-      date: today.getTime(),
-    }),
-  );
+  const { data: todayExpenses } = useDailyExpenseTotal(token!, today.getTime());
 
   return (
     <div className="p-4 safe-area-inset flex flex-col gap-6 max-w-md mx-auto pb-8">
@@ -104,7 +100,7 @@ function Home() {
             </p>
             <div className="flex justify-between items-end">
               <span className="text-4xl font-bold">
-                ₹{todayExpenses.toLocaleString()}
+                ₹{(todayExpenses ?? 0).toLocaleString()}
               </span>
               <Link to="/expenses" className="text-white/80 text-sm font-bold hover:text-white">
                 View →
@@ -120,6 +116,7 @@ function Home() {
         <div className="grid grid-cols-3 gap-3">
           <Link
             to="/sales/new"
+            search={{ tripId: undefined }}
             className="flex flex-col items-center gap-2 p-4 bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-gray-100"
           >
             <div className="bg-indigo-100 p-3 rounded-full">

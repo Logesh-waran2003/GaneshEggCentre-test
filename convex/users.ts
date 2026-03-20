@@ -1,6 +1,5 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { Id } from "./_generated/dataModel";
 
 async function hashPassword(password: string): Promise<string> {
   const encoder = new TextEncoder();
@@ -60,6 +59,16 @@ export const createUser = mutation({
     });
 
     return userId;
+  },
+});
+
+export const listActiveEmployees = query({
+  args: {},
+  handler: async (ctx) => {
+    const users = await ctx.db.query("users").collect();
+    return users
+      .filter((u) => u.isActive)
+      .map((u) => ({ _id: u._id, name: u.name, role: u.role }));
   },
 });
 

@@ -5,11 +5,36 @@ import {
   Link,
   Outlet,
 } from "@tanstack/react-router";
+import { useEffect, Component, ReactNode } from "react";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import appCss from "../styles.css?url";
 import { QueryClient } from "@tanstack/react-query";
 import { MobileAppShell } from "../components/layout/MobileAppShell";
+import { DevPanel } from "../components/layout/DevPanel";
+
+class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
+  state = { error: null };
+  static getDerivedStateFromError(error: Error) { return { error }; }
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="p-8 flex flex-col items-center justify-center min-h-[100dvh] text-center max-w-md mx-auto">
+          <div className="text-5xl mb-4">🥚</div>
+          <h1 className="text-xl font-bold text-gray-900 mb-2">Something went wrong</h1>
+          <p className="text-sm text-gray-500 mb-6">{(this.state.error as Error).message}</p>
+          <button
+            onClick={() => { this.setState({ error: null }); window.location.href = "/"; }}
+            className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-medium"
+          >
+            Go Home
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
@@ -63,10 +88,19 @@ export const Route = createRootRouteWithContext<{
 });
 
 function RootComponent() {
+  useEffect(() => {
+    if (import.meta.env.DEV) {
+      void import("react-grab");
+    }
+  }, []);
+
   return (
-    <MobileAppShell>
-      <Outlet />
-    </MobileAppShell>
+    <ErrorBoundary>
+      <MobileAppShell>
+        <Outlet />
+        {import.meta.env.DEV && <DevPanel />}
+      </MobileAppShell>
+    </ErrorBoundary>
   );
 }
 
@@ -78,15 +112,17 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body className="font-['Outfit'] bg-gray-50 text-gray-900 antialiased selection:bg-indigo-100 italic-none">
         <main className="min-h-[100dvh]">{children}</main>
-        <TanStackDevtools
-          config={{ position: "bottom-right" }}
-          plugins={[
-            {
-              name: "Tanstack Router",
-              render: <TanStackRouterDevtoolsPanel />,
-            },
-          ]}
-        />
+        {import.meta.env.DEV && (
+          <TanStackDevtools
+            config={{ position: "bottom-right" }}
+            plugins={[
+              {
+                name: "Tanstack Router",
+                render: <TanStackRouterDevtoolsPanel />,
+              },
+            ]}
+          />
+        )}
         <Scripts />
       </body>
     </html>

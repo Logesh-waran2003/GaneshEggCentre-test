@@ -9,25 +9,21 @@ import {
 } from "../components/ui/card";
 import { ArrowLeft, Check } from "lucide-react";
 import { useState } from "react";
-import { convexQuery } from "@convex-dev/react-query";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { useMutation } from "convex/react";
-import { api } from "../../convex/_generated/api";
-import { requireAuth } from "../lib/auth";
+import { requireAdmin } from "../lib/auth";
+import { useTodayRates, useSetDailyRate } from "../api/rates";
+import { useProducts } from "../api/products";
+import { Rate } from "../types/rate";
+import { Id } from "../../convex/_generated/dataModel";
 
 export const Route = createFileRoute("/setup")({
-  beforeLoad: requireAuth,
+  beforeLoad: requireAdmin,
   component: Setup,
 });
 
 function Setup() {
-  const { data: rates } = useSuspenseQuery(
-    convexQuery(api.rates.getTodayRates, {})
-  );
-  const { data: products } = useSuspenseQuery(
-    convexQuery(api.products.getProducts, {})
-  );
-  const setDailyRate = useMutation(api.rates.setDailyRate);
+  const { data: rates } = useTodayRates();
+  const { data: products } = useProducts();
+  const setDailyRate = useSetDailyRate();
   const router = useRouter();
 
   const [productRates, setProductRates] = useState<
@@ -35,7 +31,7 @@ function Setup() {
   >(() => {
     const initial: Record<string, { perEgg: string; perTray: string }> = {};
     products.forEach((product) => {
-      const rate = rates.find((r: any) => r.productId === product._id);
+      const rate = rates.find((r: Rate) => r.productId === product._id);
       initial[product._id] = {
         perEgg: rate?.ratePerEgg?.toString() || "",
         perTray: rate?.ratePerTray?.toString() || "",
@@ -53,7 +49,7 @@ function Setup() {
         const rate = productRates[product._id];
         if (rate?.perEgg && rate?.perTray) {
           await setDailyRate({
-            productId: product._id,
+            productId: product._id as Id<"products">,
             ratePerEgg: Number(rate.perEgg),
             ratePerTray: Number(rate.perTray),
           });

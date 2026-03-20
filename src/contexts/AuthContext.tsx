@@ -48,11 +48,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(null);
     if (typeof window !== "undefined") {
       localStorage.removeItem("auth_token");
+      localStorage.removeItem("user_role");
       window.location.href = "/login";
     }
   };
 
+  // Sync role to localStorage so requireAdmin() can check it synchronously
+  useEffect(() => {
+    if (currentUser) {
+      localStorage.setItem("user_role", currentUser.role);
+    }
+  }, [currentUser]);
+
   const isLoading = token !== null && currentUser === undefined;
+
+  // Session expired on server — clear local token and redirect to login
+  useEffect(() => {
+    if (token !== null && currentUser === null && !isLoading) {
+      setToken(null);
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("user_role");
+      window.location.href = "/login";
+    }
+  }, [token, currentUser, isLoading]);
 
   return (
     <AuthContext.Provider value={{ currentUser: currentUser ?? null, token, isLoading, login, logout }}>

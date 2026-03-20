@@ -1,11 +1,14 @@
 import { convexQuery } from "@convex-dev/react-query";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
 
-export function useTodayTrips(token: string) {
-  return useSuspenseQuery(convexQuery(api.saleTrips.getTodayTrips, { token }));
+export function useTodayTrips(token: string | null) {
+  return useQuery({
+    ...convexQuery(api.saleTrips.getTodayTrips, { token: token ?? "" }),
+    enabled: !!token,
+  });
 }
 
 export function useTripDetails(token: string, tripId: Id<"saleTrips">) {
@@ -14,8 +17,11 @@ export function useTripDetails(token: string, tripId: Id<"saleTrips">) {
   );
 }
 
-export function useActiveTrips(token: string) {
-  return useSuspenseQuery(convexQuery(api.saleTrips.getActiveTrips, { token }));
+export function useActiveTrips(token: string | null) {
+  return useQuery({
+    ...convexQuery(api.saleTrips.getActiveTrips, { token: token ?? "" }),
+    enabled: !!token,
+  });
 }
 
 export function useCreateTrip() {
@@ -32,4 +38,24 @@ export function useCompleteTrip() {
 
 export function useApproveEndTrip() {
   return useMutation(api.saleTrips.approveEndTrip);
+}
+
+export function useTripExpenses(tripId: Id<"saleTrips">) {
+  return useSuspenseQuery(
+    convexQuery(api.tripExpenses.getTripExpenses, { tripId })
+  );
+}
+
+export function useTripProfitability(tripId: Id<"saleTrips">) {
+  return useSuspenseQuery(
+    convexQuery(api.tripExpenses.getTripProfitability, { tripId })
+  );
+}
+
+export function useAddTripExpense() {
+  return useMutation(api.tripExpenses.addTripExpense);
+}
+
+export function useDeleteTripExpense() {
+  return useMutation(api.tripExpenses.deleteTripExpense);
 }

@@ -1,25 +1,20 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { convexQuery } from "@convex-dev/react-query";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { useMutation } from "convex/react";
-import { api } from "../../convex/_generated/api";
+import { useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct } from "@/api/products";
 import { useState } from "react";
 import { ArrowLeft, Plus, Pencil, Trash2 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Card, CardContent } from "../components/ui/card";
 import type { Id } from "../../convex/_generated/dataModel";
-import { requireAuth } from "../lib/auth";
+import { requireAdmin } from "../lib/auth";
 
 export const Route = createFileRoute("/products")({
-  beforeLoad: requireAuth,
+  beforeLoad: requireAdmin,
   component: Products,
 });
 
 function Products() {
-  const { data: products } = useSuspenseQuery(
-    convexQuery(api.products.getProducts, {}),
-  );
+  const { data: products } = useProducts();
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<Id<"products"> | null>(null);
 
@@ -99,9 +94,7 @@ function ProductForm({
   productId: Id<"products"> | null;
   onClose: () => void;
 }) {
-  const { data: products } = useSuspenseQuery(
-    convexQuery(api.products.getProducts, {}),
-  );
+  const { data: products } = useProducts();
   const product = productId ? products.find((p) => p._id === productId) : null;
 
   const [name, setName] = useState(product?.name || "");
@@ -109,8 +102,8 @@ function ProductForm({
     product?.eggsPerTray?.toString() || "30",
   );
 
-  const createProduct = useMutation(api.products.createProduct);
-  const updateProduct = useMutation(api.products.updateProduct);
+  const createProduct = useCreateProduct();
+  const updateProduct = useUpdateProduct();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -176,7 +169,7 @@ function ProductForm({
 }
 
 function DeleteButton({ productId }: { productId: Id<"products"> }) {
-  const deleteProduct = useMutation(api.products.deleteProduct);
+  const deleteProduct = useDeleteProduct();
   const [confirming, setConfirming] = useState(false);
 
   if (confirming) {
