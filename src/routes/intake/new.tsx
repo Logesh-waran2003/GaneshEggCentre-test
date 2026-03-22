@@ -19,7 +19,8 @@ export const Route = createFileRoute("/intake/new")({
 });
 
 function NewIntake() {
-  const { token } = useAuth();
+  const { token, currentUser } = useAuth();
+  const isAdmin = currentUser?.role === "ADMIN";
   const { data: contacts } = useContacts("vendor");
   const { data: products } = useProducts();
   const createTransaction = useCreateTransaction();
@@ -113,6 +114,7 @@ function NewIntake() {
           contacts={filteredContacts}
           search={search}
           onSearchChange={setSearch}
+          showBalance={isAdmin}
         />
 
         {selectedContact && (

@@ -13,6 +13,7 @@ import {
   MoreHorizontal,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
+import { useAuth } from "../../contexts/AuthContext";
 
 interface MobileAppShellProps {
   children: React.ReactNode;
@@ -53,6 +54,8 @@ function BottomNavigation() {
   const location = useLocation();
   const currentPath = location.pathname;
   const [showQuickActions, setShowQuickActions] = useState(false);
+  const { currentUser } = useAuth();
+  const isAdmin = currentUser?.role === "ADMIN";
 
   const navItems = [
     {
@@ -152,16 +155,18 @@ function BottomNavigation() {
                 </div>
                 <span className="text-xs font-medium text-gray-700">Expense</span>
               </Link>
-              <Link
-                to="/inventory"
-                className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-amber-50 transition-colors"
-                onClick={() => setShowQuickActions(false)}
-              >
-                <div className="bg-amber-100 p-3 rounded-full">
-                  <BarChart3 className="size-5 text-amber-600" />
-                </div>
-                <span className="text-xs font-medium text-gray-700">Stock</span>
-              </Link>
+              {isAdmin && (
+                <Link
+                  to="/inventory"
+                  className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-amber-50 transition-colors"
+                  onClick={() => setShowQuickActions(false)}
+                >
+                  <div className="bg-amber-100 p-3 rounded-full">
+                    <BarChart3 className="size-5 text-amber-600" />
+                  </div>
+                  <span className="text-xs font-medium text-gray-700">Stock</span>
+                </Link>
+              )}
             </div>
           </div>
         </>

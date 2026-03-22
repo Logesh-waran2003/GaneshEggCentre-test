@@ -21,8 +21,10 @@ import { useState } from "react";
 import { useContactById, useUpdateContact } from "../api/contacts";
 import { useContactTransactions } from "../api/transactions";
 import { useAuth } from "../contexts/AuthContext";
+import { requireAdmin } from "../lib/auth";
 
 export const Route = createFileRoute("/contacts/$contactId")({
+  beforeLoad: requireAdmin,
   component: ContactDetail,
 });
 

@@ -24,7 +24,8 @@ export const Route = createFileRoute("/sales/new")({
 });
 
 function NewSale() {
-  const { token } = useAuth();
+  const { token, currentUser } = useAuth();
+  const isAdmin = currentUser?.role === "ADMIN";
   const searchParams = Route.useSearch();
   const { data: contacts } = useContacts("customer");
   const { data: rates } = useTodayRates();
@@ -125,6 +126,7 @@ function NewSale() {
           contacts={filteredContacts}
           search={search}
           onSearchChange={setSearch}
+          showBalance={isAdmin}
         />
 
         {selectedContact && (

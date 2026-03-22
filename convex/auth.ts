@@ -24,7 +24,7 @@ export const login = mutation({
   handler: async (ctx, args) => {
     const user = await ctx.db
       .query("users")
-      .withIndex("by_username", (q) => q.eq("username", args.username))
+      .filter((q) => q.eq(q.field("username"), args.username))
       .first();
 
     if (!user) {
@@ -36,6 +36,7 @@ export const login = mutation({
     }
 
     const passwordHash = await hashPassword(args.password);
+    console.log("computed:", passwordHash.substring(0, 10), "stored:", user.passwordHash.substring(0, 10));
     if (passwordHash !== user.passwordHash) {
       throw new Error("Invalid credentials");
     }

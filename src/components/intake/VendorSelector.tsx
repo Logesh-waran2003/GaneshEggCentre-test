@@ -10,6 +10,7 @@ interface VendorSelectorProps {
   contacts: Contact[];
   search: string;
   onSearchChange: (search: string) => void;
+  showBalance?: boolean;
 }
 
 export function VendorSelector({
@@ -18,6 +19,7 @@ export function VendorSelector({
   contacts,
   search,
   onSearchChange,
+  showBalance = true,
 }: VendorSelectorProps) {
   return (
     <section className="mb-6">
@@ -48,9 +50,11 @@ export function VendorSelector({
                 <UserCircle className="size-8 text-gray-400 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-gray-900">{c.name}</div>
-                  <div className="text-xs text-gray-500">
-                    Balance: ₹{c.currentBalance.toFixed(2)}
-                  </div>
+                  {showBalance && (
+                    <div className="text-xs text-gray-500">
+                      Balance: ₹{c.currentBalance.toFixed(2)}
+                    </div>
+                  )}
                 </div>
               </button>
             ))}
@@ -66,9 +70,11 @@ export function VendorSelector({
               <UserCircle className="size-10 text-green-600" />
               <div>
                 <div className="font-semibold text-gray-900">{selectedContact.name}</div>
-                <div className="text-xs text-gray-600">
-                  Balance: ₹{selectedContact.currentBalance.toFixed(2)}
-                </div>
+                {showBalance && (
+                  <div className="text-xs text-gray-600">
+                    Balance: ₹{selectedContact.currentBalance.toFixed(2)}
+                  </div>
+                )}
               </div>
             </div>
             <Button

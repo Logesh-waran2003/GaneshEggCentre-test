@@ -9,6 +9,7 @@ interface CustomerSelectorProps {
   contacts: Contact[];
   search: string;
   onSearchChange: (search: string) => void;
+  showBalance?: boolean;
 }
 
 export function CustomerSelector({
@@ -17,6 +18,7 @@ export function CustomerSelector({
   contacts,
   search,
   onSearchChange,
+  showBalance = true,
 }: CustomerSelectorProps) {
   if (selectedContact) {
     return (
@@ -29,9 +31,11 @@ export function CustomerSelector({
               </div>
               <div>
                 <p className="font-semibold text-gray-900">{selectedContact.name}</p>
-                <p className="text-xs text-gray-500">
-                  Balance: ₹{selectedContact.currentBalance.toFixed(2)}
-                </p>
+                {showBalance && (
+                  <p className="text-xs text-gray-500">
+                    Balance: ₹{selectedContact.currentBalance.toFixed(2)}
+                  </p>
+                )}
               </div>
             </div>
             <button
@@ -69,11 +73,13 @@ export function CustomerSelector({
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium text-gray-900">{contact.name}</p>
-                  <p className="text-xs text-gray-500">
-                    Balance: ₹{contact.currentBalance.toFixed(2)}
-                  </p>
+                  {showBalance && (
+                    <p className="text-xs text-gray-500">
+                      Balance: ₹{contact.currentBalance.toFixed(2)}
+                    </p>
+                  )}
                 </div>
-                {contact.priceAdjustment !== 0 && (
+                {showBalance && contact.priceAdjustment !== 0 && (
                   <span className="text-xs font-medium text-indigo-600">
                     {contact.priceAdjustment > 0 ? "+" : ""}
                     ₹{contact.priceAdjustment}/egg
