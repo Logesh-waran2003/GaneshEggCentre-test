@@ -29,16 +29,20 @@ export function SaleItemList({ items, products, onUpdate, onRemove, onAdd }: Sal
   const availableProducts = products.filter((p) => !items.some((i) => i.product._id === p._id));
 
   return (
-    <section className="mb-6">
-      <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block ml-1">Items</label>
-      <div className="space-y-3">
-        {items.map((item, index) => (
-          <SaleItemCard key={index} item={item} index={index} onUpdate={onUpdate} onRemove={onRemove} />
-        ))}
-      </div>
+    <section className="mb-6 mt-4">
+      {items.length > 0 && (
+        <>
+          <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block ml-1">Items</label>
+          <div className="space-y-3">
+            {items.map((item, index) => (
+              <SaleItemCard key={index} item={item} index={index} onUpdate={onUpdate} onRemove={onRemove} />
+            ))}
+          </div>
+        </>
+      )}
 
       {availableProducts.length > 0 && (
-        <div className="mt-4">
+        <div className={items.length > 0 ? "mt-4" : ""}>
           <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block ml-1">Add Product</label>
           <div className="grid grid-cols-2 gap-3">
             {availableProducts.map((product) => (
