@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Card, CardContent } from "../components/ui/card";
 import { EggLoader } from "../components/ui/EggLoader";
-import { TrendingUp, ShoppingCart, Package, Users, Receipt, BarChart3, ShoppingBag, Wallet } from "lucide-react";
+import { TrendingUp, ShoppingCart, Package, Users, Receipt, BarChart3, ShoppingBag, Wallet, ClipboardList } from "lucide-react";
 import { useDashboardStats } from "../api/transactions";
 import { useTodayRates } from "../api/rates";
 import { useProducts } from "../api/products";
@@ -197,13 +197,32 @@ function Home() {
         <div className="grid grid-cols-3 gap-3">
           <Link
             to="/sales/new"
-            search={{ tripId: undefined }}
+            search={{ tripId: undefined, walkIn: undefined }}
             className="flex flex-col items-center gap-2 p-4 bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-gray-100"
           >
             <div className="bg-indigo-100 p-3 rounded-full">
               <ShoppingBag className="size-6 text-indigo-600" />
             </div>
             <span className="text-xs font-bold text-gray-700 text-center">New Sale</span>
+          </Link>
+          <Link
+            to="/sales/new"
+            search={{ tripId: undefined, walkIn: true }}
+            className="flex flex-col items-center gap-2 p-4 bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-emerald-100"
+          >
+            <div className="bg-emerald-100 p-3 rounded-full">
+              <ShoppingCart className="size-6 text-emerald-600" />
+            </div>
+            <span className="text-xs font-bold text-gray-700 text-center">Walk-in</span>
+          </Link>
+          <Link
+            to="/sales"
+            className="flex flex-col items-center gap-2 p-4 bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-gray-100"
+          >
+            <div className="bg-violet-100 p-3 rounded-full">
+              <ClipboardList className="size-6 text-violet-600" />
+            </div>
+            <span className="text-xs font-bold text-gray-700 text-center">Sales</span>
           </Link>
           <Link
             to="/contacts"

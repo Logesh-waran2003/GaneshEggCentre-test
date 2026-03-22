@@ -1,8 +1,8 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
-import { ArrowLeft } from "lucide-react";
-import { useState, useMemo } from "react";
+import { ArrowLeft, UserPlus } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
 import { useContacts } from "../../api/contacts";
 import { useTodayRates } from "../../api/rates";
 import { useProducts } from "../../api/products";
@@ -13,13 +13,15 @@ import { Contact } from "../../types/contact";
 import { CustomerSelector } from "../../components/sales/CustomerSelector";
 import { SaleItemList } from "../../components/sales/SaleItemList";
 import { SaleSummary } from "../../components/sales/SaleSummary";
-import { SaleConfirmDialog, SaleErrorDialog } from "../../components/sales/SaleConfirmDialog";
+import { SaleErrorDialog } from "../../components/sales/SaleConfirmDialog";
+import { ContactForm } from "../../components/contacts/ContactForm";
 
 export const Route = createFileRoute("/sales/new")({
   beforeLoad: requireAuth,
   component: NewSale,
   validateSearch: (search: Record<string, unknown>) => ({
     tripId: search.tripId as string | undefined,
+    walkIn: (search.walkIn === "true" || search.walkIn === true) ? true : undefined,
   }),
 });
 
@@ -40,11 +42,15 @@ function NewSale() {
   const [remarks, setRemarks] = useState("");
   const [cashCollectedEnabled, setCashCollectedEnabled] = useState(false);
   const [cashCollected, setCashCollected] = useState("");
-  const [showConfirmation, setShowConfirmation] = useState(false);
-  const [confirmationMessage, setConfirmationMessage] = useState("");
+  const [showNewContact, setShowNewContact] = useState(false);
   const [showError, setShowError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Auto-select walk-in if ?walkIn=true
+  useEffect(() => {
+    if (searchParams.walkIn) handleWalkIn();
+  }, []);
 
   const filteredContacts = useMemo(
     () => contacts.filter((c: Contact) => c.name.toLowerCase().includes(search.toLowerCase())),
@@ -118,7 +124,6 @@ function NewSale() {
       setShowError(true);
     } finally {
       setIsSubmitting(false);
-      setShowConfirmation(false);
     }
   };
 
@@ -129,19 +134,38 @@ function NewSale() {
           <Button variant="ghost" size="icon" asChild className="rounded-2xl">
             <Link to="/"><ArrowLeft className="size-6 text-gray-600" /></Link>
           </Button>
-          <h1 className="text-2xl font-bold text-indigo-950">Record Sale</h1>
+          <h1 className="text-2xl font-bold text-indigo-950 flex-1">
+            {isWalkIn ? "Walk-in Sale" : "Record Sale"}
+          </h1>
+          {!selectedContact && !isWalkIn && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-2xl"
+              onClick={() => setShowNewContact(true)}
+              title="Add new customer"
+            >
+              <UserPlus className="size-5 text-indigo-600" />
+            </Button>
+          )}
         </header>
 
-        <CustomerSelector
-          selectedContact={selectedContact}
-          onSelectContact={handleSelectContact}
-          contacts={filteredContacts}
-          search={search}
-          onSearchChange={setSearch}
-          showBalance={isAdmin}
-          isWalkIn={isWalkIn}
-          onWalkIn={handleWalkIn}
-        />
+        {showNewContact ? (
+          <div className="mb-4">
+            <ContactForm onClose={() => setShowNewContact(false)} />
+          </div>
+        ) : (
+          <CustomerSelector
+            selectedContact={selectedContact}
+            onSelectContact={handleSelectContact}
+            contacts={filteredContacts}
+            search={search}
+            onSearchChange={setSearch}
+            showBalance={isAdmin}
+            isWalkIn={isWalkIn}
+            onWalkIn={handleWalkIn}
+          />
+        )}
 
         {(selectedContact || isWalkIn) && (
           <>
@@ -176,27 +200,10 @@ function NewSale() {
           onCashCollectedEnabledChange={isWalkIn ? () => {} : setCashCollectedEnabled}
           onCashCollectedChange={isWalkIn ? () => {} : setCashCollected}
           isWalkIn={isWalkIn}
-          onSubmit={() => {
-            const cashAmount = isWalkIn ? totalAmount : (cashCollectedEnabled ? Number(cashCollected) || 0 : 0);
-            const creditAmount = totalAmount - cashAmount;
-            setConfirmationMessage(
-              isWalkIn
-                ? `Cash Sale — Total: ₹${totalAmount.toFixed(2)}`
-                : `Total: ₹${totalAmount.toFixed(2)}${cashAmount > 0 ? ` | Cash: ₹${cashAmount.toFixed(2)} | Credit: ₹${creditAmount.toFixed(2)}` : ""}`
-            );
-            setShowConfirmation(true);
-          }}
+          onSubmit={handleSubmit}
           isSubmitting={isSubmitting}
         />
       )}
-
-      <SaleConfirmDialog
-        open={showConfirmation}
-        message={confirmationMessage}
-        isSubmitting={isSubmitting}
-        onConfirm={handleSubmit}
-        onCancel={() => setShowConfirmation(false)}
-      />
 
       <SaleErrorDialog
         open={showError}
