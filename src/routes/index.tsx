@@ -23,7 +23,7 @@ export const Route = createFileRoute("/")({
 function Home() {
   const { token, currentUser } = useAuth();
   const isAdmin = currentUser?.role === "ADMIN";
-  const { data: stats } = useDashboardStats();
+  const { data: stats } = useDashboardStats(token);
   const { data: rates } = useTodayRates();
   const { data: products } = useProducts();
 

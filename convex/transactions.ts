@@ -184,13 +184,14 @@ export const getContactTransactions = query({
 });
 
 export const getDashboardStats = query({
-  args: {},
-  handler: async (ctx) => {
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    const user = await requireAuth(ctx, args.token);
     const now = new Date();
     now.setHours(0, 0, 0, 0);
     const startOfToday = now.getTime();
 
-    const todaySales = await ctx.db
+    const allSales = await ctx.db
       .query("transactions")
       .filter((q) =>
         q.and(
@@ -200,7 +201,12 @@ export const getDashboardStats = query({
       )
       .collect();
 
-    const todayPayments = await ctx.db
+    // Employees only see their own sales
+    const todaySales = user.role === "ADMIN"
+      ? allSales
+      : allSales.filter((t) => t.createdBy === user._id);
+
+    const allPayments = await ctx.db
       .query("transactions")
       .filter((q) =>
         q.and(
@@ -210,14 +216,12 @@ export const getDashboardStats = query({
       )
       .collect();
 
-    const totalSalesAmount = todaySales.reduce(
-      (acc, curr) => acc + curr.amount,
-      0
-    );
-    const totalPaymentsAmount = todayPayments.reduce(
-      (acc, curr) => acc + curr.amount,
-      0
-    );
+    const todayPayments = user.role === "ADMIN"
+      ? allPayments
+      : allPayments.filter((t) => t.createdBy === user._id);
+
+    const totalSalesAmount = todaySales.reduce((acc, curr) => acc + curr.amount, 0);
+    const totalPaymentsAmount = todayPayments.reduce((acc, curr) => acc + curr.amount, 0);
 
     let totalTraysSold = 0;
     for (const sale of todaySales) {

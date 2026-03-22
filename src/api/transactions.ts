@@ -14,6 +14,6 @@ export function useCreateTransaction() {
   return useMutation(api.transactions.createTransaction);
 }
 
-export function useDashboardStats() {
-  return useSuspenseQuery(convexQuery(api.transactions.getDashboardStats, {}));
+export function useDashboardStats(token: string | null) {
+  return useSuspenseQuery(convexQuery(api.transactions.getDashboardStats, { token: token ?? "" }));
 }
