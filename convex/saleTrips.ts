@@ -214,10 +214,15 @@ export const getTodayTrips = query({
 export const getTripDetails = query({
   args: { token: v.string(), tripId: v.id("saleTrips") },
   handler: async (ctx, args) => {
-    await requireAuth(ctx, args.token);
+    const user = await requireAuth(ctx, args.token);
 
     const trip = await ctx.db.get(args.tripId);
     if (!trip) throw new Error("Trip not found");
+
+    // Employees can only view trips they are assigned to
+    if (user.role !== "ADMIN" && !trip.employees.includes(user._id)) {
+      throw new Error("Unauthorized");
+    }
 
     const product = await ctx.db.get(trip.productId);
     const employeeDetails = await Promise.all(
@@ -246,12 +251,16 @@ export const getTripDetails = query({
 export const getActiveTrips = query({
   args: { token: v.string() },
   handler: async (ctx, args) => {
-    await requireAuth(ctx, args.token);
+    const user = await requireAuth(ctx, args.token);
 
-    const trips = await ctx.db
+    const allTrips = await ctx.db
       .query("saleTrips")
       .withIndex("by_status", (q) => q.eq("status", "IN_PROGRESS"))
       .collect();
+
+    const trips = user.role === "ADMIN"
+      ? allTrips
+      : allTrips.filter((t) => t.employees.includes(user._id));
 
     const result = [];
     for (const trip of trips) {
