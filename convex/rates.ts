@@ -18,6 +18,7 @@ export const getTodayRates = query({
 export const setDailyRate = mutation({
   args: {
     productId: v.id("products"),
+    neccRatePerEgg: v.optional(v.number()),
     ratePerEgg: v.number(),
     ratePerTray: v.number(),
   },
@@ -34,6 +35,7 @@ export const setDailyRate = mutation({
 
     if (existing) {
       await ctx.db.patch(existing._id, {
+        neccRatePerEgg: args.neccRatePerEgg,
         ratePerEgg: args.ratePerEgg,
         ratePerTray: args.ratePerTray,
       });
@@ -41,6 +43,7 @@ export const setDailyRate = mutation({
       await ctx.db.insert("dailyBoardRates", {
         date: startOfToday,
         productId: args.productId,
+        neccRatePerEgg: args.neccRatePerEgg,
         ratePerEgg: args.ratePerEgg,
         ratePerTray: args.ratePerTray,
       });

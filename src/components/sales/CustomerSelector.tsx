@@ -1,4 +1,4 @@
-import { Search, UserCircle } from "lucide-react";
+import { Search, UserCircle, ShoppingBag } from "lucide-react";
 import { Input } from "../ui/input";
 import { Card, CardContent } from "../ui/card";
 import { Contact } from "../../types/contact";
@@ -10,6 +10,8 @@ interface CustomerSelectorProps {
   search: string;
   onSearchChange: (search: string) => void;
   showBalance?: boolean;
+  isWalkIn?: boolean;
+  onWalkIn?: () => void;
 }
 
 export function CustomerSelector({
@@ -19,7 +21,35 @@ export function CustomerSelector({
   search,
   onSearchChange,
   showBalance = true,
+  isWalkIn = false,
+  onWalkIn,
 }: CustomerSelectorProps) {
+  if (isWalkIn) {
+    return (
+      <Card className="border-emerald-200 bg-emerald-50">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="bg-emerald-100 p-2 rounded-full">
+                <ShoppingBag className="size-5 text-emerald-600" />
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900">Walk-in / Cash Sale</p>
+                <p className="text-xs text-gray-500">No customer account</p>
+              </div>
+            </div>
+            <button
+              onClick={() => onSelectContact(null)}
+              className="text-sm text-emerald-600 hover:text-emerald-700 font-medium"
+            >
+              Change
+            </button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (selectedContact) {
     return (
       <Card className="border-indigo-200 bg-indigo-50">
@@ -63,6 +93,22 @@ export function CustomerSelector({
       </div>
 
       <div className="space-y-2 max-h-[40vh] overflow-y-auto">
+        {onWalkIn && (
+          <Card
+            className="cursor-pointer hover:border-emerald-300 border-dashed transition-colors"
+            onClick={onWalkIn}
+          >
+            <CardContent className="p-3">
+              <div className="flex items-center gap-3">
+                <ShoppingBag className="size-4 text-emerald-600" />
+                <div>
+                  <p className="font-medium text-emerald-700">Walk-in Sale</p>
+                  <p className="text-xs text-gray-500">Cash only — no customer account</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
         {contacts.map((contact) => (
           <Card
             key={contact._id}

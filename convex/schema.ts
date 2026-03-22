@@ -20,6 +20,7 @@ export default defineSchema({
   dailyBoardRates: defineTable({
     date: v.number(),
     productId: v.id("products"),
+    neccRatePerEgg: v.optional(v.number()),
     ratePerEgg: v.number(),
     ratePerTray: v.number(),
   }).index("by_date", ["date"]),
@@ -40,7 +41,7 @@ export default defineSchema({
   }).index("by_token", ["token"]),
 
   transactions: defineTable({
-    contactId: v.id("contacts"),
+    contactId: v.optional(v.id("contacts")),
     type: v.union(
       v.literal("SALE"),
       v.literal("PURCHASE"),

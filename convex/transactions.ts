@@ -17,7 +17,7 @@ async function requireAuth(ctx: any, token: string) {
 export const createTransaction = mutation({
   args: {
     token: v.string(),
-    contactId: v.id("contacts"),
+    contactId: v.optional(v.id("contacts")),
     type: v.union(
       v.literal("SALE"),
       v.literal("PURCHASE"),
@@ -56,8 +56,8 @@ export const createTransaction = mutation({
       createdBy: user._id,
     });
 
-    // 2. If cash collected on SALE, create PAYMENT_IN
-    if (args.type === "SALE" && args.cashCollected && args.cashCollected > 0) {
+    // 2. If cash collected on SALE with a contact, create PAYMENT_IN
+    if (args.contactId && args.type === "SALE" && args.cashCollected && args.cashCollected > 0) {
       await ctx.db.insert("transactions", {
         contactId: args.contactId,
         type: "PAYMENT_IN",
@@ -127,28 +127,29 @@ export const createTransaction = mutation({
       }
     }
 
-    // 4. Update Contact Balance
-    const contact = await ctx.db.get(args.contactId);
-    if (contact) {
-      let balanceChange = 0;
-      
-      if (args.type === "SALE") {
-        // For sales: only add credit amount (total - cash collected)
-        const creditAmount = args.cashCollected 
-          ? args.amount - args.cashCollected 
-          : args.amount;
-        balanceChange = creditAmount;
-      } else if (args.type === "PURCHASE") {
-        balanceChange = -args.amount;
-      } else if (args.type === "PAYMENT_IN") {
-        balanceChange = -args.amount;
-      } else if (args.type === "PAYMENT_OUT") {
-        balanceChange = args.amount;
-      }
+    // 4. Update Contact Balance (only if contactId provided)
+    if (args.contactId) {
+      const contact = await ctx.db.get(args.contactId);
+      if (contact) {
+        let balanceChange = 0;
 
-      await ctx.db.patch(args.contactId, {
-        currentBalance: (contact.currentBalance ?? 0) + balanceChange,
-      });
+        if (args.type === "SALE") {
+          const creditAmount = args.cashCollected
+            ? args.amount - args.cashCollected
+            : args.amount;
+          balanceChange = creditAmount;
+        } else if (args.type === "PURCHASE") {
+          balanceChange = -args.amount;
+        } else if (args.type === "PAYMENT_IN") {
+          balanceChange = -args.amount;
+        } else if (args.type === "PAYMENT_OUT") {
+          balanceChange = args.amount;
+        }
+
+        await ctx.db.patch(args.contactId, {
+          currentBalance: (contact.currentBalance ?? 0) + balanceChange,
+        });
+      }
     }
 
     return transactionId;

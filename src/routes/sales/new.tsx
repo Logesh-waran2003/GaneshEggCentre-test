@@ -34,6 +34,7 @@ function NewSale() {
   const router = useRouter();
 
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+  const [isWalkIn, setIsWalkIn] = useState(false);
   const [search, setSearch] = useState("");
   const [items, setItems] = useState<any[]>([]);
   const [remarks, setRemarks] = useState("");
@@ -76,14 +77,25 @@ function NewSale() {
 
   const removeItem = (index: number) => setItems(items.filter((_, i) => i !== index));
 
+  const handleSelectContact = (contact: Contact | null) => {
+    setSelectedContact(contact);
+    setIsWalkIn(false);
+  };
+
+  const handleWalkIn = () => {
+    setSelectedContact(null);
+    setIsWalkIn(true);
+    setCashCollectedEnabled(true);
+  };
+
   const handleSubmit = async () => {
-    if (!selectedContact) return;
+    if (!selectedContact && !isWalkIn) return;
     setIsSubmitting(true);
     try {
-      const cashAmount = cashCollectedEnabled ? Number(cashCollected) || 0 : 0;
+      const cashAmount = isWalkIn ? totalAmount : (cashCollectedEnabled ? Number(cashCollected) || 0 : 0);
       await createTransaction({
         token: token!,
-        contactId: selectedContact._id,
+        contactId: selectedContact?._id,
         type: "SALE",
         amount: totalAmount,
         date: Date.now(),
@@ -122,14 +134,16 @@ function NewSale() {
 
         <CustomerSelector
           selectedContact={selectedContact}
-          onSelectContact={setSelectedContact}
+          onSelectContact={handleSelectContact}
           contacts={filteredContacts}
           search={search}
           onSearchChange={setSearch}
           showBalance={isAdmin}
+          isWalkIn={isWalkIn}
+          onWalkIn={handleWalkIn}
         />
 
-        {selectedContact && (
+        {(selectedContact || isWalkIn) && (
           <>
             <SaleItemList
               items={items}
@@ -154,18 +168,21 @@ function NewSale() {
         )}
       </div>
 
-      {selectedContact && items.length > 0 && (
+      {(selectedContact || isWalkIn) && items.length > 0 && (
         <SaleSummary
           totalAmount={totalAmount}
-          cashCollectedEnabled={cashCollectedEnabled}
-          cashCollected={cashCollected}
-          onCashCollectedEnabledChange={setCashCollectedEnabled}
-          onCashCollectedChange={setCashCollected}
+          cashCollectedEnabled={isWalkIn ? true : cashCollectedEnabled}
+          cashCollected={isWalkIn ? totalAmount.toFixed(2) : cashCollected}
+          onCashCollectedEnabledChange={isWalkIn ? () => {} : setCashCollectedEnabled}
+          onCashCollectedChange={isWalkIn ? () => {} : setCashCollected}
+          isWalkIn={isWalkIn}
           onSubmit={() => {
-            const cashAmount = cashCollectedEnabled ? Number(cashCollected) || 0 : 0;
+            const cashAmount = isWalkIn ? totalAmount : (cashCollectedEnabled ? Number(cashCollected) || 0 : 0);
             const creditAmount = totalAmount - cashAmount;
             setConfirmationMessage(
-              `Total: ₹${totalAmount.toFixed(2)}${cashAmount > 0 ? ` | Cash: ₹${cashAmount.toFixed(2)} | Credit: ₹${creditAmount.toFixed(2)}` : ""}`
+              isWalkIn
+                ? `Cash Sale — Total: ₹${totalAmount.toFixed(2)}`
+                : `Total: ₹${totalAmount.toFixed(2)}${cashAmount > 0 ? ` | Cash: ₹${cashAmount.toFixed(2)} | Credit: ₹${creditAmount.toFixed(2)}` : ""}`
             );
             setShowConfirmation(true);
           }}

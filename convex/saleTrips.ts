@@ -295,7 +295,7 @@ export const getTripDetails = query({
 
     const salesWithDetails = [];
     for (const sale of sales) {
-      const contact = await ctx.db.get(sale.contactId);
+      const contact = sale.contactId ? await ctx.db.get(sale.contactId) : null;
       const items = await ctx.db
         .query("transactionItems")
         .withIndex("by_transactionId", (q) => q.eq("transactionId", sale._id))

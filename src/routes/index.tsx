@@ -72,6 +72,14 @@ function Home() {
                         {product.name}
                       </span>
                       <div className="flex gap-4">
+                        {isAdmin && rate.neccRatePerEgg != null && (
+                          <div className="text-right">
+                            <div className="text-xs text-gray-400">NECC</div>
+                            <div className="text-lg font-black text-gray-500">
+                              ₹{rate.neccRatePerEgg}
+                            </div>
+                          </div>
+                        )}
                         <div className="text-right">
                           <div className="text-xs text-gray-400">Per Egg</div>
                           <div className="text-lg font-black text-indigo-950">
@@ -84,6 +92,14 @@ function Home() {
                             ₹{rate.ratePerTray}
                           </div>
                         </div>
+                        {isAdmin && rate.neccRatePerEgg != null && (
+                          <div className="text-right">
+                            <div className="text-xs text-gray-400">Margin</div>
+                            <div className={`text-sm font-black ${rate.ratePerEgg - rate.neccRatePerEgg >= 0 ? "text-emerald-600" : "text-red-500"}`}>
+                              {rate.ratePerEgg - rate.neccRatePerEgg >= 0 ? "+" : ""}₹{(rate.ratePerEgg - rate.neccRatePerEgg).toFixed(2)}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </CardContent>

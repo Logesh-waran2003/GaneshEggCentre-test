@@ -10,6 +10,7 @@ interface SaleSummaryProps {
   onCashCollectedChange: (value: string) => void;
   onSubmit: () => void;
   isSubmitting: boolean;
+  isWalkIn?: boolean;
 }
 
 export function SaleSummary({
@@ -20,6 +21,7 @@ export function SaleSummary({
   onCashCollectedChange,
   onSubmit,
   isSubmitting,
+  isWalkIn = false,
 }: SaleSummaryProps) {
   const cashAmount = cashCollectedEnabled ? Number(cashCollected) || 0 : 0;
   const creditAmount = totalAmount - cashAmount;
@@ -35,33 +37,39 @@ export function SaleSummary({
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={cashCollectedEnabled}
-              onChange={(e) => onCashCollectedEnabledChange(e.target.checked)}
-              className="size-4 rounded"
-            />
-            <label className="text-sm text-gray-700">Cash Collected</label>
-          </div>
+          {isWalkIn ? (
+            <p className="text-xs font-medium text-emerald-600">Cash Sale — full amount collected</p>
+          ) : (
+            <>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={cashCollectedEnabled}
+                  onChange={(e) => onCashCollectedEnabledChange(e.target.checked)}
+                  className="size-4 rounded"
+                />
+                <label className="text-sm text-gray-700">Cash Collected</label>
+              </div>
 
-          {cashCollectedEnabled && (
-            <Input
-              type="number"
-              placeholder="Enter cash amount"
-              value={cashCollected}
-              onChange={(e) => onCashCollectedChange(e.target.value)}
-              className="h-10 bg-white"
-            />
-          )}
+              {cashCollectedEnabled && (
+                <Input
+                  type="number"
+                  placeholder="Enter cash amount"
+                  value={cashCollected}
+                  onChange={(e) => onCashCollectedChange(e.target.value)}
+                  className="h-10 bg-white"
+                />
+              )}
 
-          {cashCollectedEnabled && cashAmount > 0 && (
-            <div className="flex justify-between text-sm pt-2 border-t border-indigo-100">
-              <span className="text-gray-600">Credit Amount</span>
-              <span className={`font-semibold ${creditAmount < 0 ? "text-red-600" : "text-gray-900"}`}>
-                ₹{creditAmount.toFixed(2)}
-              </span>
-            </div>
+              {cashCollectedEnabled && cashAmount > 0 && (
+                <div className="flex justify-between text-sm pt-2 border-t border-indigo-100">
+                  <span className="text-gray-600">Credit Amount</span>
+                  <span className={`font-semibold ${creditAmount < 0 ? "text-red-600" : "text-gray-900"}`}>
+                    ₹{creditAmount.toFixed(2)}
+                  </span>
+                </div>
+              )}
+            </>
           )}
         </div>
 
