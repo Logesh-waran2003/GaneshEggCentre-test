@@ -156,6 +156,74 @@ export const createTransaction = mutation({
   },
 });
 
+export const getSales = query({
+  args: {
+    token: v.string(),
+    date: v.optional(v.number()), // start of day timestamp
+  },
+  handler: async (ctx, args) => {
+    const user = await requireAuth(ctx, args.token);
+
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const startOfDay = args.date ?? now.getTime();
+    const endOfDay = startOfDay + 86400000;
+
+    const allSales = await ctx.db
+      .query("transactions")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("type"), "SALE"),
+          q.gte(q.field("date"), startOfDay),
+          q.lt(q.field("date"), endOfDay)
+        )
+      )
+      .order("desc")
+      .collect();
+
+    const sales = user.role === "ADMIN"
+      ? allSales
+      : allSales.filter((t) => t.createdBy === user._id);
+
+    const result = [];
+    for (const tx of sales) {
+      const contact = tx.contactId ? await ctx.db.get(tx.contactId) : null;
+      const creator = tx.createdBy ? await ctx.db.get(tx.createdBy) : null;
+      const items = await ctx.db
+        .query("transactionItems")
+        .withIndex("by_transactionId", (q) => q.eq("transactionId", tx._id))
+        .collect();
+      const itemsWithProduct = [];
+      for (const item of items) {
+        const product = await ctx.db.get(item.productId);
+        itemsWithProduct.push({ ...item, product });
+      }
+      result.push({ ...tx, contact, creator, items: itemsWithProduct });
+    }
+    return result;
+  },
+});
+
+export const updateSale = mutation({
+  args: {
+    token: v.string(),
+    transactionId: v.id("transactions"),
+    description: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const user = await requireAuth(ctx, args.token);
+    const tx = await ctx.db.get(args.transactionId);
+    if (!tx) throw new Error("Sale not found");
+    if (user.role !== "ADMIN" && tx.createdBy !== user._id) {
+      throw new Error("Not authorized");
+    }
+    await ctx.db.patch(args.transactionId, {
+      description: args.description,
+    });
+  },
+});
+
+
 export const getContactTransactions = query({
   args: { contactId: v.id("contacts") },
   handler: async (ctx, args) => {

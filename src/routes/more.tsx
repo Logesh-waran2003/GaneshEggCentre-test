@@ -16,6 +16,7 @@ import {
   Briefcase,
   Truck,
   Receipt,
+  ClipboardList,
 } from "lucide-react";
 
 export const Route = createFileRoute("/more")({
@@ -146,6 +147,20 @@ function MorePage() {
               <div className="flex-1">
                 <h3 className="font-medium text-gray-900">Contacts</h3>
                 <p className="text-xs text-gray-500 mt-0.5">Manage suppliers & clients</p>
+              </div>
+              <ChevronRight className="size-5 text-gray-300" />
+            </Link>
+
+            <Link
+              to="/sales"
+              className="flex items-center gap-4 p-4 hover:bg-gray-50 active:bg-gray-100 transition-colors"
+            >
+              <div className="bg-indigo-100 p-2 rounded-lg text-indigo-600">
+                <ClipboardList className="size-5" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-medium text-gray-900">Sales</h3>
+                <p className="text-xs text-gray-500 mt-0.5">View & manage sales</p>
               </div>
               <ChevronRight className="size-5 text-gray-300" />
             </Link>

@@ -17,3 +17,13 @@ export function useCreateTransaction() {
 export function useDashboardStats(token: string | null) {
   return useSuspenseQuery(convexQuery(api.transactions.getDashboardStats, { token: token ?? "" }));
 }
+
+export function useSales(token: string | null, date?: number) {
+  return useSuspenseQuery(
+    convexQuery(api.transactions.getSales, { token: token ?? "", date })
+  );
+}
+
+export function useUpdateSale() {
+  return useMutation(api.transactions.updateSale);
+}
