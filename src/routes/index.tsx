@@ -21,7 +21,8 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
-  const { token } = useAuth();
+  const { token, currentUser } = useAuth();
+  const isAdmin = currentUser?.role === "ADMIN";
   const { data: stats } = useDashboardStats();
   const { data: rates } = useTodayRates();
   const { data: products } = useProducts();
@@ -142,6 +143,7 @@ function Home() {
             </div>
             <span className="text-xs font-bold text-gray-700 text-center">Trips</span>
           </Link>
+          {isAdmin && (
           <Link
             to="/inventory"
             className="flex flex-col items-center gap-2 p-4 bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-gray-100"
@@ -151,6 +153,7 @@ function Home() {
             </div>
             <span className="text-xs font-bold text-gray-700 text-center">Stock</span>
           </Link>
+          )}
           <Link
             to="/expenses"
             className="flex flex-col items-center gap-2 p-4 bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-gray-100"
@@ -160,6 +163,7 @@ function Home() {
             </div>
             <span className="text-xs font-bold text-gray-700 text-center">Expenses</span>
           </Link>
+          {isAdmin && (
           <Link
             to="/ledger"
             className="flex flex-col items-center gap-2 p-4 bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-gray-100"
@@ -169,6 +173,7 @@ function Home() {
             </div>
             <span className="text-xs font-bold text-gray-700 text-center">Ledger</span>
           </Link>
+          )}
         </div>
       </section>
 
@@ -178,9 +183,11 @@ function Home() {
           <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
             <TrendingUp className="size-4 text-indigo-600" /> Daily Board Rates
           </h2>
-          <Link to="/setup" className="text-sm font-semibold text-indigo-600">
-            Update
-          </Link>
+          {isAdmin && (
+            <Link to="/setup" className="text-sm font-semibold text-indigo-600">
+              Update
+            </Link>
+          )}
         </div>
         <div className="grid grid-cols-1 gap-3">
           {rates
