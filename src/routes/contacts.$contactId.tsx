@@ -20,6 +20,7 @@ import { Id } from "../../convex/_generated/dataModel";
 import { useState } from "react";
 import { useContactById, useUpdateContact } from "../api/contacts";
 import { useContactTransactions } from "../api/transactions";
+import { useAuth } from "../contexts/AuthContext";
 
 export const Route = createFileRoute("/contacts/$contactId")({
   component: ContactDetail,
@@ -32,6 +33,8 @@ function ContactDetail() {
 
   const [editingAdjustment, setEditingAdjustment] = useState(false);
   const [adjustment, setAdjustment] = useState("");
+  const { currentUser } = useAuth();
+  const isAdmin = currentUser?.role === "ADMIN";
   const [expandedTx, setExpandedTx] = useState<string | null>(null);
   const updateContact = useUpdateContact();
 
@@ -83,6 +86,7 @@ function ContactDetail() {
             </div>
           </div>
 
+          {isAdmin && (
           <div className="bg-white/10 rounded-3xl p-6 backdrop-blur-sm border border-white/10">
             <p className="text-indigo-100 text-[10px] font-black uppercase tracking-widest mb-1 opacity-80">
               Current Balance
@@ -98,6 +102,7 @@ function ContactDetail() {
                 : "Payment / Advance due"}
             </p>
           </div>
+          )}
 
           <div className="mt-6 flex items-center gap-2 px-1">
             {!editingAdjustment ? (
@@ -143,6 +148,7 @@ function ContactDetail() {
         </CardContent>
       </Card>
 
+      {isAdmin && (
       <div className="space-y-4">
         <div className="flex items-center justify-between px-1">
           <h3 className="text-xl font-black text-indigo-950">History</h3>
@@ -299,6 +305,7 @@ function ContactDetail() {
           )}
         </div>
       </div>
+      )}
     </div>
   );
 }

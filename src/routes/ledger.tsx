@@ -13,14 +13,14 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "../lib/utils";
-import { requireAuth } from "../lib/auth";
+import { requireAdmin } from "../lib/auth";
 import { useAuth } from "../contexts/AuthContext";
 import { useContacts } from "../api/contacts";
 import { useCreateTransaction } from "../api/transactions";
 import { Contact } from "../types/contact";
 
 export const Route = createFileRoute("/ledger")({
-  beforeLoad: requireAuth,
+  beforeLoad: requireAdmin,
   component: Ledger,
 });
 

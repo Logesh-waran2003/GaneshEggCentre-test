@@ -6,7 +6,7 @@ import { memo } from "react";
 import { Contact } from "../../types/contact";
 import { cn } from "../../lib/utils";
 
-export const ContactCard = memo(function ContactCard({ contact }: { contact: Contact }) {
+export const ContactCard = memo(function ContactCard({ contact, showBalance = true }: { contact: Contact; showBalance?: boolean }) {
   return (
     <Link to="/contacts/$contactId" params={{ contactId: contact._id }}>
       <Card className="border-gray-50 shadow-sm overflow-visible hover:border-indigo-200 transition-colors">
@@ -27,13 +27,15 @@ export const ContactCard = memo(function ContactCard({ contact }: { contact: Con
               )}
             </div>
           </div>
-          <div className="text-right">
-            <p className="text-xs font-bold text-gray-400 tracking-tighter uppercase mb-0.5">Balance</p>
-            <p className={cn("font-black text-lg leading-none", contact.currentBalance > 0 ? "text-red-500" : "text-emerald-500")}>
-              ₹{Math.abs(contact.currentBalance).toLocaleString()}
-            </p>
-            <p className="text-[10px] text-gray-400 font-medium">{contact.currentBalance > 0 ? "You're Owed" : "You Owe"}</p>
-          </div>
+          {showBalance && (
+            <div className="text-right">
+              <p className="text-xs font-bold text-gray-400 tracking-tighter uppercase mb-0.5">Balance</p>
+              <p className={cn("font-black text-lg leading-none", contact.currentBalance > 0 ? "text-red-500" : "text-emerald-500")}>
+                ₹{Math.abs(contact.currentBalance).toLocaleString()}
+              </p>
+              <p className="text-[10px] text-gray-400 font-medium">{contact.currentBalance > 0 ? "You're Owed" : "You Owe"}</p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </Link>

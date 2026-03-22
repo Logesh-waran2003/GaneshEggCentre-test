@@ -12,9 +12,9 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as UsersRouteImport } from './routes/users'
 import { Route as TripsRouteImport } from './routes/trips'
 import { Route as SetupRouteImport } from './routes/setup'
-import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SalesRouteImport } from './routes/sales'
 import { Route as ProductsRouteImport } from './routes/products'
+import { Route as MoreRouteImport } from './routes/more'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LedgerRouteImport } from './routes/ledger'
 import { Route as InventoryRouteImport } from './routes/inventory'
@@ -46,11 +46,6 @@ const SetupRoute = SetupRouteImport.update({
   path: '/setup',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SettingsRoute = SettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SalesRoute = SalesRouteImport.update({
   id: '/sales',
   path: '/sales',
@@ -59,6 +54,11 @@ const SalesRoute = SalesRouteImport.update({
 const ProductsRoute = ProductsRouteImport.update({
   id: '/products',
   path: '/products',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MoreRoute = MoreRouteImport.update({
+  id: '/more',
+  path: '/more',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -146,9 +146,9 @@ export interface FileRoutesByFullPath {
   '/inventory': typeof InventoryRoute
   '/ledger': typeof LedgerRoute
   '/login': typeof LoginRoute
+  '/more': typeof MoreRoute
   '/products': typeof ProductsRoute
   '/sales': typeof SalesRouteWithChildren
-  '/settings': typeof SettingsRoute
   '/setup': typeof SetupRoute
   '/trips': typeof TripsRouteWithChildren
   '/users': typeof UsersRoute
@@ -168,9 +168,9 @@ export interface FileRoutesByTo {
   '/inventory': typeof InventoryRoute
   '/ledger': typeof LedgerRoute
   '/login': typeof LoginRoute
+  '/more': typeof MoreRoute
   '/products': typeof ProductsRoute
   '/sales': typeof SalesRouteWithChildren
-  '/settings': typeof SettingsRoute
   '/setup': typeof SetupRoute
   '/users': typeof UsersRoute
   '/contacts/$contactId': typeof ContactsContactIdRoute
@@ -191,9 +191,9 @@ export interface FileRoutesById {
   '/inventory': typeof InventoryRoute
   '/ledger': typeof LedgerRoute
   '/login': typeof LoginRoute
+  '/more': typeof MoreRoute
   '/products': typeof ProductsRoute
   '/sales': typeof SalesRouteWithChildren
-  '/settings': typeof SettingsRoute
   '/setup': typeof SetupRoute
   '/trips': typeof TripsRouteWithChildren
   '/users': typeof UsersRoute
@@ -216,9 +216,9 @@ export interface FileRouteTypes {
     | '/inventory'
     | '/ledger'
     | '/login'
+    | '/more'
     | '/products'
     | '/sales'
-    | '/settings'
     | '/setup'
     | '/trips'
     | '/users'
@@ -238,9 +238,9 @@ export interface FileRouteTypes {
     | '/inventory'
     | '/ledger'
     | '/login'
+    | '/more'
     | '/products'
     | '/sales'
-    | '/settings'
     | '/setup'
     | '/users'
     | '/contacts/$contactId'
@@ -260,9 +260,9 @@ export interface FileRouteTypes {
     | '/inventory'
     | '/ledger'
     | '/login'
+    | '/more'
     | '/products'
     | '/sales'
-    | '/settings'
     | '/setup'
     | '/trips'
     | '/users'
@@ -284,9 +284,9 @@ export interface RootRouteChildren {
   InventoryRoute: typeof InventoryRoute
   LedgerRoute: typeof LedgerRoute
   LoginRoute: typeof LoginRoute
+  MoreRoute: typeof MoreRoute
   ProductsRoute: typeof ProductsRoute
   SalesRoute: typeof SalesRouteWithChildren
-  SettingsRoute: typeof SettingsRoute
   SetupRoute: typeof SetupRoute
   TripsRoute: typeof TripsRouteWithChildren
   UsersRoute: typeof UsersRoute
@@ -315,13 +315,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SetupRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/settings': {
-      id: '/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof SettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/sales': {
       id: '/sales'
       path: '/sales'
@@ -334,6 +327,13 @@ declare module '@tanstack/react-router' {
       path: '/products'
       fullPath: '/products'
       preLoaderRoute: typeof ProductsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/more': {
+      id: '/more'
+      path: '/more'
+      fullPath: '/more'
+      preLoaderRoute: typeof MoreRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -502,9 +502,9 @@ const rootRouteChildren: RootRouteChildren = {
   InventoryRoute: InventoryRoute,
   LedgerRoute: LedgerRoute,
   LoginRoute: LoginRoute,
+  MoreRoute: MoreRoute,
   ProductsRoute: ProductsRoute,
   SalesRoute: SalesRouteWithChildren,
-  SettingsRoute: SettingsRoute,
   SetupRoute: SetupRoute,
   TripsRoute: TripsRouteWithChildren,
   UsersRoute: UsersRoute,

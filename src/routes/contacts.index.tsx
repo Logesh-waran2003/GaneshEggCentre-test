@@ -9,6 +9,7 @@ import { Contact } from "../types/contact";
 import { ContactCard } from "../components/contacts/ContactCard";
 import { ContactForm } from "../components/contacts/ContactForm";
 import { cn } from "../lib/utils";
+import { useAuth } from "../contexts/AuthContext";
 
 export const Route = createFileRoute("/contacts/")({
   component: Contacts,
@@ -16,6 +17,8 @@ export const Route = createFileRoute("/contacts/")({
 
 function Contacts() {
   const { data: contacts } = useContacts();
+  const { currentUser } = useAuth();
+  const isAdmin = currentUser?.role === "ADMIN";
   const [isAdding, setIsAdding] = useState(false);
   const [search, setSearch] = useState("");
 
@@ -52,7 +55,7 @@ function Contacts() {
 
       <div className="flex flex-col gap-3">
         {filteredContacts.map((contact: Contact) => (
-          <ContactCard key={contact._id} contact={contact} />
+          <ContactCard key={contact._id} contact={contact} showBalance={isAdmin} />
         ))}
         {filteredContacts.length === 0 && (
           <div className="text-center py-20 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-100">

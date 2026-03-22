@@ -4,12 +4,12 @@ import { useState } from "react";
 import { Package, ArrowLeft } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "../components/ui/sheet";
-import { requireAuth } from "../lib/auth";
+import { requireAdmin } from "../lib/auth";
 import { StockCard } from "../components/inventory/StockCard";
 import { StockCheckForm } from "../components/inventory/StockCheckForm";
 
 export const Route = createFileRoute("/inventory")({
-  beforeLoad: requireAuth,
+  beforeLoad: requireAdmin,
   component: Inventory,
 });
 

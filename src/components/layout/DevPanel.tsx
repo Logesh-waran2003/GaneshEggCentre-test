@@ -26,7 +26,7 @@ const ROUTES: RouteInfo[] = [
   { path: "/products", label: "Products", phase: 1, roles: "ADMIN", status: "warn", bugs: ["Not restricted to ADMIN — any employee can create/delete products"] },
   { path: "/setup", label: "Setup / Rates", phase: 1, roles: "ADMIN", status: "warn", bugs: ["Not restricted to ADMIN — any employee can change daily rates"] },
   { path: "/users", label: "Users", phase: 1, roles: "ADMIN", status: "ok", bugs: [] },
-  { path: "/settings", label: "Settings", phase: 1, roles: "BOTH", status: "ok", bugs: [] },
+  { path: "/more", label: "More", phase: 1, roles: "BOTH", status: "ok", bugs: [] },
   { path: "/trips", label: "Trips", phase: 2, roles: "BOTH", status: "ok", bugs: [] },
   { path: "/trips/new", label: "New Trip", phase: 2, roles: "BOTH", status: "broken", bugs: ["Crashes for EMPLOYEE — useListUsers requires admin token"] },
   { path: "/admin-trips", label: "Admin Trips", phase: 2, roles: "ADMIN", status: "warn", bugs: ["No component-level role guard — employee can see approval UI"] },

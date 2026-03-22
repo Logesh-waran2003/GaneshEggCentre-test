@@ -2,7 +2,6 @@ type UserRole = "ADMIN" | "EMPLOYEE";
 
 type FeatureName =
   | "userManagement"
-  | "settings"
   | "adminTrips"
   | "deleteAnyExpense"
   | "deleteAnyTransaction"
@@ -17,7 +16,6 @@ type FeatureName =
 const FEATURE_FLAGS: Record<FeatureName, UserRole[]> = {
   // Admin only
   userManagement: ["ADMIN"],
-  settings: ["ADMIN"],
   adminTrips: ["ADMIN"],
   deleteAnyExpense: ["ADMIN"],
   deleteAnyTransaction: ["ADMIN"],
