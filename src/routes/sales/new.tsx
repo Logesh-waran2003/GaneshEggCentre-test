@@ -137,8 +137,7 @@ function NewSale() {
           <h1 className="text-2xl font-bold text-indigo-950 flex-1">
             {isWalkIn ? "Walk-in Sale" : "Record Sale"}
           </h1>
-          {!selectedContact && !isWalkIn && (
-            <Button
+          {!selectedContact && (            <Button
               variant="ghost"
               size="icon"
               className="rounded-2xl"
