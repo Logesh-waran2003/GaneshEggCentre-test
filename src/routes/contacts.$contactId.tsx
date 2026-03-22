@@ -105,7 +105,7 @@ function ContactDetail() {
           )}
 
           <div className="mt-6 flex items-center gap-2 px-1">
-            {!editingAdjustment ? (
+            {isAdmin && !editingAdjustment && (
               <>
                 <Badge className="bg-white/20 hover:bg-white/30 text-white border-none px-4 py-1.5 rounded-full font-bold text-[10px] uppercase tracking-wider">
                   Rate Adj: {contact.priceAdjustment > 0 ? "+" : ""}
@@ -123,7 +123,8 @@ function ContactDetail() {
                   <Edit2 className="size-4" />
                 </Button>
               </>
-            ) : (
+            )}
+            {isAdmin && editingAdjustment && (
               <div className="flex items-center gap-2 w-full">
                 <Input
                   type="number"
