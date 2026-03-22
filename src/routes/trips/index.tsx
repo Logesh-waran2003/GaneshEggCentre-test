@@ -46,7 +46,9 @@ function TripsList() {
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex items-center gap-2">
                       <Truck className="size-5 text-indigo-600" />
-                      <h3 className="font-bold text-lg">{trip.product?.name} Egg</h3>
+                      <h3 className="font-bold text-lg">
+                        {trip.tripProducts?.map((tp) => tp.productName).join(", ") || "No products"}
+                      </h3>
                     </div>
                     <Badge className={statusColors[trip.status as keyof typeof statusColors]}>
                       {trip.status.replace("_", " ")}
@@ -56,11 +58,19 @@ function TripsList() {
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div>
                       <p className="text-gray-500 text-xs">Loaded</p>
-                      <p className="font-bold">{trip.loadedQtyTrays}T + {trip.loadedQtyLoose}L</p>
+                      <p className="font-bold">
+                        {trip.tripProducts?.reduce((s, tp) => s + tp.loadedQtyTrays, 0) ?? 0}T
+                        {" + "}
+                        {trip.tripProducts?.reduce((s, tp) => s + tp.loadedQtyLoose, 0) ?? 0}L
+                      </p>
                     </div>
                     <div>
                       <p className="text-gray-500 text-xs">Sold</p>
-                      <p className="font-bold">{trip.soldQtyTrays}T + {trip.soldQtyLoose}L</p>
+                      <p className="font-bold">
+                        {trip.tripProducts?.reduce((s, tp) => s + tp.soldQtyTrays, 0) ?? 0}T
+                        {" + "}
+                        {trip.tripProducts?.reduce((s, tp) => s + tp.soldQtyLoose, 0) ?? 0}L
+                      </p>
                     </div>
                   </div>
 

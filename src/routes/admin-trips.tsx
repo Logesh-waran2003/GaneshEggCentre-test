@@ -57,7 +57,9 @@ function AdminTrips() {
                   <CardContent className="p-4">
                     <div className="flex justify-between items-start mb-3">
                       <div>
-                        <h3 className="font-bold text-lg">{trip.product?.name} Egg</h3>
+                        <h3 className="font-bold text-lg">
+                          {trip.tripProducts?.map((tp: any) => tp.productName).join(", ") || "No products"}
+                        </h3>
                         <p className="text-sm text-gray-600">
                           {trip.employeeDetails?.map((e: any) => e?.name).join(", ")}
                         </p>
@@ -66,13 +68,13 @@ function AdminTrips() {
                     </div>
                     <div className="flex justify-between items-center">
                       <p className="text-sm">
-                        Loaded: <span className="font-bold">{trip.loadedQtyTrays}T + {trip.loadedQtyLoose}L</span>
+                        Loaded: <span className="font-bold">
+                          {trip.tripProducts?.reduce((s: number, tp: any) => s + tp.loadedQtyTrays, 0) ?? 0}T
+                          {" + "}
+                          {trip.tripProducts?.reduce((s: number, tp: any) => s + tp.loadedQtyLoose, 0) ?? 0}L
+                        </span>
                       </p>
-                      <Button
-                        size="sm"
-                        variant="premium"
-                        onClick={() => handleApproveStart(trip._id)}
-                      >
+                      <Button size="sm" variant="premium" onClick={() => handleApproveStart(trip._id)}>
                         <CheckCircle className="size-4 mr-1" /> Approve Start
                       </Button>
                     </div>
@@ -92,7 +94,9 @@ function AdminTrips() {
                   <CardContent className="p-4">
                     <div className="flex justify-between items-start mb-3">
                       <div>
-                        <h3 className="font-bold text-lg">{trip.product?.name} Egg</h3>
+                        <h3 className="font-bold text-lg">
+                          {trip.tripProducts?.map((tp: any) => tp.productName).join(", ") || "No products"}
+                        </h3>
                         <p className="text-sm text-gray-600">
                           {trip.employeeDetails?.map((e: any) => e?.name).join(", ")}
                         </p>
@@ -102,11 +106,19 @@ function AdminTrips() {
                     <div className="grid grid-cols-3 gap-3 text-sm">
                       <div>
                         <p className="text-gray-500 text-xs">Loaded</p>
-                        <p className="font-bold">{trip.loadedQtyTrays}T + {trip.loadedQtyLoose}L</p>
+                        <p className="font-bold">
+                          {trip.tripProducts?.reduce((s: number, tp: any) => s + tp.loadedQtyTrays, 0) ?? 0}T
+                          {" + "}
+                          {trip.tripProducts?.reduce((s: number, tp: any) => s + tp.loadedQtyLoose, 0) ?? 0}L
+                        </p>
                       </div>
                       <div>
                         <p className="text-gray-500 text-xs">Sold</p>
-                        <p className="font-bold">{trip.soldQtyTrays}T + {trip.soldQtyLoose}L</p>
+                        <p className="font-bold">
+                          {trip.tripProducts?.reduce((s: number, tp: any) => s + tp.soldQtyTrays, 0) ?? 0}T
+                          {" + "}
+                          {trip.tripProducts?.reduce((s: number, tp: any) => s + tp.soldQtyLoose, 0) ?? 0}L
+                        </p>
                       </div>
                       <div>
                         <p className="text-gray-500 text-xs">Cash</p>
@@ -129,7 +141,9 @@ function AdminTrips() {
                   <CardContent className="p-4">
                     <div className="flex justify-between items-start mb-3">
                       <div>
-                        <h3 className="font-bold text-lg">{trip.product?.name} Egg</h3>
+                        <h3 className="font-bold text-lg">
+                          {trip.tripProducts?.map((tp: any) => tp.productName).join(", ") || "No products"}
+                        </h3>
                         <p className="text-sm text-gray-600">
                           {trip.employeeDetails?.map((e: any) => e?.name).join(", ")}
                         </p>
@@ -139,15 +153,21 @@ function AdminTrips() {
                     <div className="grid grid-cols-4 gap-2 text-sm mb-3">
                       <div>
                         <p className="text-gray-500 text-xs">Sold</p>
-                        <p className="font-bold">{trip.soldQtyTrays}T + {trip.soldQtyLoose}L</p>
+                        <p className="font-bold">
+                          {trip.tripProducts?.reduce((s: number, tp: any) => s + tp.soldQtyTrays, 0) ?? 0}T
+                        </p>
                       </div>
                       <div>
                         <p className="text-gray-500 text-xs">Returned</p>
-                        <p className="font-bold">{trip.returnedQtyTrays}T + {trip.returnedQtyLoose}L</p>
+                        <p className="font-bold">
+                          {trip.tripProducts?.reduce((s: number, tp: any) => s + tp.returnedQtyTrays, 0) ?? 0}T
+                        </p>
                       </div>
                       <div>
                         <p className="text-gray-500 text-xs">Damaged</p>
-                        <p className="font-bold text-red-600">{trip.damagedQtyTrays}T + {trip.damagedQtyLoose}L</p>
+                        <p className="font-bold text-red-600">
+                          {trip.tripProducts?.reduce((s: number, tp: any) => s + tp.damagedQtyTrays, 0) ?? 0}T
+                        </p>
                       </div>
                       <div>
                         <p className="text-gray-500 text-xs">Cash</p>

@@ -66,6 +66,26 @@ export default defineSchema({
       v.literal("COMPLETED"),
       v.literal("APPROVED")
     ),
+    productId: v.optional(v.id("products")),
+    loadedQtyTrays: v.optional(v.number()),
+    loadedQtyLoose: v.optional(v.number()),
+    soldQtyTrays: v.optional(v.number()),
+    soldQtyLoose: v.optional(v.number()),
+    returnedQtyTrays: v.optional(v.number()),
+    returnedQtyLoose: v.optional(v.number()),
+    damagedQtyTrays: v.optional(v.number()),
+    damagedQtyLoose: v.optional(v.number()),
+    totalCashCollected: v.number(),
+    startedAt: v.optional(v.number()),
+    completedAt: v.optional(v.number()),
+    approvedAt: v.optional(v.number()),
+    approvedBy: v.optional(v.id("users")),
+  })
+    .index("by_status", ["status"])
+    .index("by_date", ["date"]),
+
+  tripProducts: defineTable({
+    tripId: v.id("saleTrips"),
     productId: v.id("products"),
     loadedQtyTrays: v.number(),
     loadedQtyLoose: v.number(),
@@ -75,14 +95,9 @@ export default defineSchema({
     returnedQtyLoose: v.number(),
     damagedQtyTrays: v.number(),
     damagedQtyLoose: v.number(),
-    totalCashCollected: v.number(),
-    startedAt: v.optional(v.number()),
-    completedAt: v.optional(v.number()),
-    approvedAt: v.optional(v.number()),
-    approvedBy: v.optional(v.id("users")),
   })
-    .index("by_status", ["status"])
-    .index("by_date", ["date"]),
+    .index("by_tripId", ["tripId"])
+    .index("by_tripId_productId", ["tripId", "productId"]),
 
   transactionItems: defineTable({
     transactionId: v.id("transactions"),

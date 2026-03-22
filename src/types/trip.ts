@@ -1,16 +1,14 @@
 import { Id } from "../../convex/_generated/dataModel";
-import { Product } from "./product";
 import { User } from "./user";
 
 export type TripStatus = "PENDING_APPROVAL" | "IN_PROGRESS" | "COMPLETED" | "APPROVED";
 
-export interface Trip {
-  _id: Id<"saleTrips">;
-  date: number;
-  employees: Id<"users">[];
-  createdBy: Id<"users">;
-  status: TripStatus;
+export interface TripProduct {
+  _id: Id<"tripProducts">;
+  tripId: Id<"saleTrips">;
   productId: Id<"products">;
+  productName: string;
+  eggsPerTray?: number;
   loadedQtyTrays: number;
   loadedQtyLoose: number;
   soldQtyTrays: number;
@@ -19,6 +17,15 @@ export interface Trip {
   returnedQtyLoose: number;
   damagedQtyTrays: number;
   damagedQtyLoose: number;
+}
+
+export interface Trip {
+  _id: Id<"saleTrips">;
+  date: number;
+  employees: Id<"users">[];
+  createdBy: Id<"users">;
+  status: TripStatus;
+  productId?: Id<"products">;
   totalCashCollected: number;
   startedAt?: number;
   completedAt?: number;
@@ -28,6 +35,6 @@ export interface Trip {
 }
 
 export interface TripWithDetails extends Trip {
-  product: Product | null;
+  tripProducts: TripProduct[];
   employeeDetails: (User | null)[];
 }

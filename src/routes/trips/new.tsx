@@ -2,7 +2,7 @@ import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Card, CardContent } from "../../components/ui/card";
-import { ArrowLeft, Check } from "lucide-react";
+import { ArrowLeft, Check, Plus, X } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { requireAuth } from "../../lib/auth";
@@ -11,29 +11,52 @@ import { useListActiveEmployees } from "../../api/users";
 import { useCreateTrip } from "../../api/trips";
 import { Product } from "../../types/product";
 import { Id } from "../../../convex/_generated/dataModel";
-import { InlineSelect } from "../../components/shared/InlineSelect";
 
 export const Route = createFileRoute("/trips/new")({
   beforeLoad: requireAuth,
   component: NewTrip,
 });
 
+interface TripItem {
+  productId: Id<"products">;
+  productName: string;
+  loadedQtyTrays: string;
+  loadedQtyLoose: string;
+}
+
 function NewTrip() {
   const { token } = useAuth();
-  
+
   if (!token) return null;
   const { data: products } = useProducts();
   const { data: users } = useListActiveEmployees();
   const createTrip = useCreateTrip();
   const router = useRouter();
 
-  const [productId, setProductId] = useState<Id<"products"> | "">("");
+  const [items, setItems] = useState<TripItem[]>([]);
   const [selectedEmployees, setSelectedEmployees] = useState<Id<"users">[]>([]);
-  const [loadedTrays, setLoadedTrays] = useState("");
-  const [loadedLoose, setLoadedLoose] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const employees = users.filter((u) => u.role === "EMPLOYEE");
+  const addedProductIds = new Set(items.map((i) => i.productId));
+  const availableProducts = products.filter((p: Product) => !addedProductIds.has(p._id));
+
+  const addProduct = (product: Product) => {
+    setItems([...items, {
+      productId: product._id,
+      productName: product.name,
+      loadedQtyTrays: "",
+      loadedQtyLoose: "",
+    }]);
+  };
+
+  const removeProduct = (productId: Id<"products">) => {
+    setItems(items.filter((i) => i.productId !== productId));
+  };
+
+  const updateItem = (productId: Id<"products">, field: "loadedQtyTrays" | "loadedQtyLoose", value: string) => {
+    setItems(items.map((i) => i.productId === productId ? { ...i, [field]: value } : i));
+  };
 
   const toggleEmployee = (userId: Id<"users">) => {
     setSelectedEmployees((prev) =>
@@ -42,8 +65,8 @@ function NewTrip() {
   };
 
   const handleSubmit = async () => {
-    if (!productId || selectedEmployees.length === 0 || !loadedTrays) {
-      alert("Please fill all required fields");
+    if (items.length === 0 || selectedEmployees.length === 0) {
+      alert("Please add at least one product and select employees");
       return;
     }
 
@@ -51,10 +74,12 @@ function NewTrip() {
     try {
       await createTrip({
         token: token!,
-        productId: productId as Id<"products">,
         employees: selectedEmployees,
-        loadedQtyTrays: Number(loadedTrays),
-        loadedQtyLoose: Number(loadedLoose) || 0,
+        products: items.map((i) => ({
+          productId: i.productId,
+          loadedQtyTrays: Number(i.loadedQtyTrays) || 0,
+          loadedQtyLoose: Number(i.loadedQtyLoose) || 0,
+        })),
       });
       router.navigate({ to: "/trips" });
     } catch (err) {
@@ -77,22 +102,73 @@ function NewTrip() {
         </header>
 
         <section className="space-y-6">
+          {/* Products */}
           <div>
             <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block ml-1">
-              Product
+              Products
             </label>
-            <InlineSelect
-              value={productId}
-              onChange={(v) => setProductId(v as Id<"products"> | "")}
-              placeholder="Select a product"
-              options={products.map((p: Product) => ({
-                value: p._id,
-                label: p.name,
-                sublabel: `Stock: ${p.currentStockQtyTrays}T + ${p.currentStockQtyLoose}L`,
-              }))}
-            />
+
+            {items.length > 0 && (
+              <div className="space-y-3 mb-3">
+                {items.map((item) => (
+                  <Card key={item.productId} className="bg-white">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="font-bold text-gray-900">{item.productName}</span>
+                        <button onClick={() => removeProduct(item.productId)}>
+                          <X className="size-4 text-gray-400 hover:text-red-500" />
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 block mb-1">
+                            Trays
+                          </label>
+                          <Input
+                            type="number"
+                            value={item.loadedQtyTrays}
+                            onChange={(e) => updateItem(item.productId, "loadedQtyTrays", e.target.value)}
+                            className="h-12 bg-gray-50 border-none font-bold"
+                            placeholder="0"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 block mb-1">
+                            Loose
+                          </label>
+                          <Input
+                            type="number"
+                            value={item.loadedQtyLoose}
+                            onChange={(e) => updateItem(item.productId, "loadedQtyLoose", e.target.value)}
+                            className="h-12 bg-gray-50 border-none font-bold"
+                            placeholder="0"
+                          />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+
+            {availableProducts.length > 0 && (
+              <div className="grid grid-cols-2 gap-3">
+                {availableProducts.map((p: Product) => (
+                  <Button
+                    key={p._id}
+                    variant="outline"
+                    className="h-14 rounded-2xl border-2 border-dashed border-gray-300 hover:border-indigo-400 hover:bg-indigo-50 transition-all"
+                    onClick={() => addProduct(p)}
+                  >
+                    <Plus className="size-4 mr-2" />
+                    {p.name}
+                  </Button>
+                ))}
+              </div>
+            )}
           </div>
 
+          {/* Employees */}
           <div>
             <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block ml-1">
               Employees
@@ -116,38 +192,6 @@ function NewTrip() {
                   </CardContent>
                 </Card>
               ))}
-            </div>
-          </div>
-
-          <div>
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block ml-1">
-              Loaded Quantity
-            </label>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 block mb-1">
-                  Trays
-                </label>
-                <Input
-                  type="number"
-                  value={loadedTrays}
-                  onChange={(e) => setLoadedTrays(e.target.value)}
-                  className="h-14 bg-white border-none font-bold text-lg"
-                  placeholder="0"
-                />
-              </div>
-              <div>
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 block mb-1">
-                  Loose
-                </label>
-                <Input
-                  type="number"
-                  value={loadedLoose}
-                  onChange={(e) => setLoadedLoose(e.target.value)}
-                  className="h-14 bg-white border-none font-bold text-lg"
-                  placeholder="0"
-                />
-              </div>
             </div>
           </div>
         </section>

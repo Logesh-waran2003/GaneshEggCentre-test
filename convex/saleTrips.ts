@@ -30,10 +30,12 @@ async function requireAdmin(ctx: any, token: string) {
 export const createTrip = mutation({
   args: {
     token: v.string(),
-    productId: v.id("products"),
     employees: v.array(v.id("users")),
-    loadedQtyTrays: v.number(),
-    loadedQtyLoose: v.number(),
+    products: v.array(v.object({
+      productId: v.id("products"),
+      loadedQtyTrays: v.number(),
+      loadedQtyLoose: v.number(),
+    })),
   },
   handler: async (ctx, args) => {
     const user = await requireAuth(ctx, args.token);
@@ -43,17 +45,23 @@ export const createTrip = mutation({
       employees: args.employees,
       createdBy: user._id,
       status: "PENDING_APPROVAL",
-      productId: args.productId,
-      loadedQtyTrays: args.loadedQtyTrays,
-      loadedQtyLoose: args.loadedQtyLoose,
-      soldQtyTrays: 0,
-      soldQtyLoose: 0,
-      returnedQtyTrays: 0,
-      returnedQtyLoose: 0,
-      damagedQtyTrays: 0,
-      damagedQtyLoose: 0,
       totalCashCollected: 0,
     });
+
+    for (const p of args.products) {
+      await ctx.db.insert("tripProducts", {
+        tripId,
+        productId: p.productId,
+        loadedQtyTrays: p.loadedQtyTrays,
+        loadedQtyLoose: p.loadedQtyLoose,
+        soldQtyTrays: 0,
+        soldQtyLoose: 0,
+        returnedQtyTrays: 0,
+        returnedQtyLoose: 0,
+        damagedQtyTrays: 0,
+        damagedQtyLoose: 0,
+      });
+    }
 
     return tripId;
   },
@@ -71,20 +79,27 @@ export const approveStartTrip = mutation({
     if (!trip) throw new Error("Trip not found");
     if (trip.status !== "PENDING_APPROVAL") throw new Error("Trip already started");
 
-    const product = await ctx.db.get(trip.productId);
-    if (!product) throw new Error("Product not found");
+    const tripProducts = await ctx.db
+      .query("tripProducts")
+      .withIndex("by_tripId", (q) => q.eq("tripId", args.tripId))
+      .collect();
 
-    if (product.currentStockQtyTrays < trip.loadedQtyTrays) {
-      throw new Error("Insufficient stock (trays)");
-    }
-    if (product.currentStockQtyLoose < trip.loadedQtyLoose) {
-      throw new Error("Insufficient stock (loose)");
-    }
+    for (const tp of tripProducts) {
+      const product = await ctx.db.get(tp.productId);
+      if (!product) throw new Error(`Product not found`);
 
-    await ctx.db.patch(trip.productId, {
-      currentStockQtyTrays: product.currentStockQtyTrays - trip.loadedQtyTrays,
-      currentStockQtyLoose: product.currentStockQtyLoose - trip.loadedQtyLoose,
-    });
+      if (product.currentStockQtyTrays < tp.loadedQtyTrays) {
+        throw new Error(`Insufficient stock (trays) for ${product.name}`);
+      }
+      if (product.currentStockQtyLoose < tp.loadedQtyLoose) {
+        throw new Error(`Insufficient stock (loose) for ${product.name}`);
+      }
+
+      await ctx.db.patch(tp.productId, {
+        currentStockQtyTrays: product.currentStockQtyTrays - tp.loadedQtyTrays,
+        currentStockQtyLoose: product.currentStockQtyLoose - tp.loadedQtyLoose,
+      });
+    }
 
     await ctx.db.patch(args.tripId, {
       status: "IN_PROGRESS",
@@ -97,10 +112,13 @@ export const completeTrip = mutation({
   args: {
     token: v.string(),
     tripId: v.id("saleTrips"),
-    returnedQtyTrays: v.number(),
-    returnedQtyLoose: v.number(),
-    damagedQtyTrays: v.number(),
-    damagedQtyLoose: v.number(),
+    returns: v.array(v.object({
+      productId: v.id("products"),
+      returnedQtyTrays: v.number(),
+      returnedQtyLoose: v.number(),
+      damagedQtyTrays: v.number(),
+      damagedQtyLoose: v.number(),
+    })),
   },
   handler: async (ctx, args) => {
     const user = await requireAuth(ctx, args.token);
@@ -112,39 +130,52 @@ export const completeTrip = mutation({
       throw new Error("Only assigned employees can complete this trip");
     }
 
+    const tripProducts = await ctx.db
+      .query("tripProducts")
+      .withIndex("by_tripId", (q) => q.eq("tripId", args.tripId))
+      .collect();
+
     const sales = await ctx.db
       .query("transactions")
       .filter((q) => q.eq(q.field("salesTripId"), args.tripId))
       .collect();
 
-    let soldTrays = 0;
-    let soldLoose = 0;
     let cashCollected = 0;
-
     for (const sale of sales) {
-      const items = await ctx.db
-        .query("transactionItems")
-        .withIndex("by_transactionId", (q) => q.eq("transactionId", sale._id))
-        .collect();
-      
-      for (const item of items) {
-        if (item.productId === trip.productId) {
-          soldTrays += item.qtyTrays;
-          soldLoose += item.qtyLoose;
+      cashCollected += sale.cashCollected || 0;
+    }
+
+    for (const tp of tripProducts) {
+      let soldTrays = 0;
+      let soldLoose = 0;
+
+      for (const sale of sales) {
+        const items = await ctx.db
+          .query("transactionItems")
+          .withIndex("by_transactionId", (q) => q.eq("transactionId", sale._id))
+          .collect();
+        for (const item of items) {
+          if (item.productId === tp.productId) {
+            soldTrays += item.qtyTrays;
+            soldLoose += item.qtyLoose;
+          }
         }
       }
-      cashCollected += sale.cashCollected || 0;
+
+      const ret = args.returns.find((r) => r.productId === tp.productId);
+      await ctx.db.patch(tp._id, {
+        soldQtyTrays: soldTrays,
+        soldQtyLoose: soldLoose,
+        returnedQtyTrays: ret?.returnedQtyTrays ?? 0,
+        returnedQtyLoose: ret?.returnedQtyLoose ?? 0,
+        damagedQtyTrays: ret?.damagedQtyTrays ?? 0,
+        damagedQtyLoose: ret?.damagedQtyLoose ?? 0,
+      });
     }
 
     await ctx.db.patch(args.tripId, {
       status: "COMPLETED",
       completedAt: Date.now(),
-      soldQtyTrays: soldTrays,
-      soldQtyLoose: soldLoose,
-      returnedQtyTrays: args.returnedQtyTrays,
-      returnedQtyLoose: args.returnedQtyLoose,
-      damagedQtyTrays: args.damagedQtyTrays,
-      damagedQtyLoose: args.damagedQtyLoose,
       totalCashCollected: cashCollected,
     });
   },
@@ -162,13 +193,20 @@ export const approveEndTrip = mutation({
     if (!trip) throw new Error("Trip not found");
     if (trip.status !== "COMPLETED") throw new Error("Trip not completed yet");
 
-    const product = await ctx.db.get(trip.productId);
-    if (!product) throw new Error("Product not found");
+    const tripProducts = await ctx.db
+      .query("tripProducts")
+      .withIndex("by_tripId", (q) => q.eq("tripId", args.tripId))
+      .collect();
 
-    await ctx.db.patch(trip.productId, {
-      currentStockQtyTrays: product.currentStockQtyTrays + trip.returnedQtyTrays + trip.damagedQtyTrays,
-      currentStockQtyLoose: product.currentStockQtyLoose + trip.returnedQtyLoose + trip.damagedQtyLoose,
-    });
+    for (const tp of tripProducts) {
+      const product = await ctx.db.get(tp.productId);
+      if (!product) continue;
+
+      await ctx.db.patch(tp.productId, {
+        currentStockQtyTrays: product.currentStockQtyTrays + tp.returnedQtyTrays + tp.damagedQtyTrays,
+        currentStockQtyLoose: product.currentStockQtyLoose + tp.returnedQtyLoose + tp.damagedQtyLoose,
+      });
+    }
 
     await ctx.db.patch(args.tripId, {
       status: "APPROVED",
@@ -193,18 +231,29 @@ export const getTodayTrips = query({
       .filter((q) => q.gte(q.field("date"), startOfToday))
       .collect();
 
-    // Employees only see trips they are assigned to
     const trips = user.role === "ADMIN"
       ? allTrips
       : allTrips.filter((t) => t.employees.includes(user._id));
 
     const result = [];
     for (const trip of trips) {
-      const product = await ctx.db.get(trip.productId);
+      const tripProducts = await ctx.db
+        .query("tripProducts")
+        .withIndex("by_tripId", (q) => q.eq("tripId", trip._id))
+        .collect();
+
+      const productsWithNames = await Promise.all(
+        tripProducts.map(async (tp) => {
+          const product = await ctx.db.get(tp.productId);
+          return { ...tp, productName: product?.name ?? "Unknown" };
+        })
+      );
+
       const employeeDetails = await Promise.all(
         trip.employees.map((id) => ctx.db.get(id))
       );
-      result.push({ ...trip, product, employeeDetails });
+
+      result.push({ ...trip, tripProducts: productsWithNames, employeeDetails });
     }
 
     return result;
@@ -219,12 +268,22 @@ export const getTripDetails = query({
     const trip = await ctx.db.get(args.tripId);
     if (!trip) throw new Error("Trip not found");
 
-    // Employees can only view trips they are assigned to
     if (user.role !== "ADMIN" && !trip.employees.includes(user._id)) {
       throw new Error("Unauthorized");
     }
 
-    const product = await ctx.db.get(trip.productId);
+    const tripProducts = await ctx.db
+      .query("tripProducts")
+      .withIndex("by_tripId", (q) => q.eq("tripId", args.tripId))
+      .collect();
+
+    const productsWithNames = await Promise.all(
+      tripProducts.map(async (tp) => {
+        const product = await ctx.db.get(tp.productId);
+        return { ...tp, productName: product?.name ?? "Unknown", eggsPerTray: product?.eggsPerTray ?? 30 };
+      })
+    );
+
     const employeeDetails = await Promise.all(
       trip.employees.map((id) => ctx.db.get(id))
     );
@@ -244,7 +303,7 @@ export const getTripDetails = query({
       salesWithDetails.push({ ...sale, contact, items });
     }
 
-    return { ...trip, product, employeeDetails, sales: salesWithDetails };
+    return { ...trip, tripProducts: productsWithNames, employeeDetails, sales: salesWithDetails };
   },
 });
 
@@ -264,8 +323,19 @@ export const getActiveTrips = query({
 
     const result = [];
     for (const trip of trips) {
-      const product = await ctx.db.get(trip.productId);
-      result.push({ ...trip, product });
+      const tripProducts = await ctx.db
+        .query("tripProducts")
+        .withIndex("by_tripId", (q) => q.eq("tripId", trip._id))
+        .collect();
+
+      const productsWithNames = await Promise.all(
+        tripProducts.map(async (tp) => {
+          const product = await ctx.db.get(tp.productId);
+          return { ...tp, productName: product?.name ?? "Unknown" };
+        })
+      );
+
+      result.push({ ...trip, tripProducts: productsWithNames });
     }
 
     return result;
