@@ -103,6 +103,8 @@ function Expenses() {
         </CardContent>
       </Card>
 
+      {/* Filter — admin only */}
+      {currentUser?.role === "ADMIN" && (
       <div className="flex gap-3 items-start">
         <div className="flex-1">
           <InlineSelect
@@ -121,6 +123,15 @@ function Expenses() {
           <Plus className="size-5" />
         </Button>
       </div>
+      )}
+
+      {currentUser?.role !== "ADMIN" && (
+        <div className="flex justify-end">
+          <Button onClick={() => setShowForm(!showForm)} className="h-12 rounded-2xl">
+            <Plus className="size-5 mr-1" /> Add Expense
+          </Button>
+        </div>
+      )}
 
       {showForm && (
         <Card className="border-indigo-100 shadow-xl">

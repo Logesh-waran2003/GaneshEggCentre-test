@@ -181,17 +181,22 @@ export const approveEndTrip = mutation({
 export const getTodayTrips = query({
   args: { token: v.string() },
   handler: async (ctx, args) => {
-    await requireAuth(ctx, args.token);
+    const user = await requireAuth(ctx, args.token);
 
     const now = new Date();
     now.setHours(0, 0, 0, 0);
     const startOfToday = now.getTime();
 
-    const trips = await ctx.db
+    const allTrips = await ctx.db
       .query("saleTrips")
       .withIndex("by_date")
       .filter((q) => q.gte(q.field("date"), startOfToday))
       .collect();
+
+    // Employees only see trips they are assigned to
+    const trips = user.role === "ADMIN"
+      ? allTrips
+      : allTrips.filter((t) => t.employees.includes(user._id));
 
     const result = [];
     for (const trip of trips) {
