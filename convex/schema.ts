@@ -23,6 +23,7 @@ export default defineSchema({
     neccRatePerEgg: v.optional(v.number()),
     ratePerEgg: v.number(),
     ratePerTray: v.number(),
+    wholesaleRatePerTray: v.optional(v.number()),
   }).index("by_date", ["date"]),
 
   users: defineTable({

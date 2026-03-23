@@ -3,6 +3,8 @@ import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Card, CardContent } from "../../components/ui/card";
 import { ArrowLeft, Check, Plus, X } from "lucide-react";
+import { toast } from "sonner";
+import { parseError } from "../../lib/parseError";
 import { useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { requireAuth } from "../../lib/auth";
@@ -66,7 +68,7 @@ function NewTrip() {
 
   const handleSubmit = async () => {
     if (items.length === 0 || selectedEmployees.length === 0) {
-      alert("Please add at least one product and select employees");
+      toast.warning("Please add at least one product and select employees");
       return;
     }
 
@@ -83,7 +85,7 @@ function NewTrip() {
       });
       router.navigate({ to: "/trips" });
     } catch (err) {
-      alert((err as Error).message);
+      toast.error(parseError(err));
     } finally {
       setIsSubmitting(false);
     }

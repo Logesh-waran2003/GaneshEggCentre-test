@@ -8,6 +8,8 @@ import { requireAdmin } from "../lib/auth";
 import { useTodayTrips, useApproveStartTrip, useApproveEndTrip } from "../api/trips";
 import { TripWithDetails } from "../types/trip";
 import { Id } from "../../convex/_generated/dataModel";
+import { toast } from "sonner";
+import { parseError } from "../lib/parseError";
 
 export const Route = createFileRoute("/admin-trips")({
   beforeLoad: requireAdmin,
@@ -28,7 +30,7 @@ function AdminTrips() {
     try {
       await approveStart({ token: token!, tripId });
     } catch (err) {
-      alert((err as Error).message);
+      toast.error(parseError(err));
     }
   };
 
@@ -36,7 +38,7 @@ function AdminTrips() {
     try {
       await approveEnd({ token: token!, tripId });
     } catch (err) {
-      alert((err as Error).message);
+      toast.error(parseError(err));
     }
   };
 

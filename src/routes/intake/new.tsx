@@ -1,6 +1,8 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { Button } from "../../components/ui/button";
 import { ArrowLeft, Plus } from "lucide-react";
+import { toast } from "sonner";
+import { parseError } from "../../lib/parseError";
 import { useState, useMemo } from "react";
 import { useContacts } from "../../api/contacts";
 import { useProducts } from "../../api/products";
@@ -59,11 +61,11 @@ function NewIntake() {
 
   const handleSave = async () => {
     if (!selectedContact) {
-      alert("Please select a supplier");
+      toast.warning("Please select a supplier");
       return;
     }
     if (items.length === 0) {
-      alert("Please add at least one item");
+      toast.warning("Please add at least one item");
       return;
     }
 
@@ -90,7 +92,7 @@ function NewIntake() {
       router.navigate({ to: "/" });
     } catch (err) {
       console.error(err);
-      alert("Failed to record intake");
+      toast.error(parseError(err));
     } finally {
       setIsSubmitting(false);
     }

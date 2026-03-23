@@ -1,6 +1,8 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
+import { toast } from "sonner";
+import { parseError } from "../lib/parseError";
 import {
   Card,
   CardContent,
@@ -27,15 +29,16 @@ function Setup() {
   const router = useRouter();
 
   const [productRates, setProductRates] = useState<
-    Record<string, { neccPerEgg: string; perEgg: string; perTray: string }>
+    Record<string, { neccPerEgg: string; perEgg: string; perTray: string; wholesaleTray: string }>
   >(() => {
-    const initial: Record<string, { neccPerEgg: string; perEgg: string; perTray: string }> = {};
+    const initial: Record<string, { neccPerEgg: string; perEgg: string; perTray: string; wholesaleTray: string }> = {};
     products.forEach((product) => {
       const rate = rates.find((r: Rate) => r.productId === product._id);
       initial[product._id] = {
         neccPerEgg: rate?.neccRatePerEgg?.toString() || "",
         perEgg: rate?.ratePerEgg?.toString() || "",
         perTray: rate?.ratePerTray?.toString() || "",
+        wholesaleTray: rate?.wholesaleRatePerTray?.toString() || "",
       };
     });
     return initial;
@@ -54,13 +57,13 @@ function Setup() {
             neccRatePerEgg: rate.neccPerEgg ? Number(rate.neccPerEgg) : undefined,
             ratePerEgg: Number(rate.perEgg),
             ratePerTray: Number(rate.perTray),
+            wholesaleRatePerTray: rate.wholesaleTray ? Number(rate.wholesaleTray) : undefined,
           });
         }
       }
       router.navigate({ to: "/" });
     } catch (err) {
-      console.error(err);
-      alert("Failed to save rates");
+      toast.error(parseError(err));
     } finally {
       setIsSaving(false);
     }
@@ -93,7 +96,7 @@ function Setup() {
                 <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">
                   {product.name}
                 </h3>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-4 gap-3">
                   <div>
                     <label className="text-xs text-gray-500 mb-1 block">NECC Rate</label>
                     <div className="relative">
@@ -105,7 +108,7 @@ function Setup() {
                         onChange={(e) => {
                           const neccPerEgg = e.target.value;
                           setProductRates((prev) => {
-                            const cur = prev[product._id] ?? { neccPerEgg: "", perEgg: "", perTray: "" };
+                            const cur = prev[product._id] ?? { neccPerEgg: "", perEgg: "", perTray: "", wholesaleTray: "" };
                             return { ...prev, [product._id]: { ...cur, neccPerEgg } };
                           });
                         }}
@@ -126,7 +129,7 @@ function Setup() {
                           const perEgg = e.target.value;
                           const perTray = perEgg ? (Number(perEgg) * product.eggsPerTray).toFixed(2) : "";
                           setProductRates((prev) => {
-                            const cur = prev[product._id] ?? { neccPerEgg: "", perEgg: "", perTray: "" };
+                            const cur = prev[product._id] ?? { neccPerEgg: "", perEgg: "", perTray: "", wholesaleTray: "" };
                             return { ...prev, [product._id]: { ...cur, perEgg, perTray } };
                           });
                         }}
@@ -147,13 +150,33 @@ function Setup() {
                         onChange={(e) => {
                           const perTray = e.target.value;
                           setProductRates((prev) => {
-                            const cur = prev[product._id] ?? { neccPerEgg: "", perEgg: "", perTray: "" };
+                            const cur = prev[product._id] ?? { neccPerEgg: "", perEgg: "", perTray: "", wholesaleTray: "" };
                             return { ...prev, [product._id]: { ...cur, perTray } };
                           });
                         }}
                         className="pl-7 font-bold text-indigo-950 h-12"
                         placeholder="0.00"
                         required
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">Wholesale</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-gray-300">₹</span>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={productRates[product._id]?.wholesaleTray || ""}
+                        onChange={(e) => {
+                          const wholesaleTray = e.target.value;
+                          setProductRates((prev) => {
+                            const cur = prev[product._id] ?? { neccPerEgg: "", perEgg: "", perTray: "", wholesaleTray: "" };
+                            return { ...prev, [product._id]: { ...cur, wholesaleTray } };
+                          });
+                        }}
+                        className="pl-7 font-bold text-indigo-950 h-12"
+                        placeholder="0.00"
                       />
                     </div>
                   </div>

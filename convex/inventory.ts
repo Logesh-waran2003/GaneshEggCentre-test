@@ -8,6 +8,60 @@ export const getCurrentStock = query({
   },
 });
 
+export const adjustStock = mutation({
+  args: {
+    token: v.string(),
+    productId: v.id("products"),
+    adjustTrays: v.number(),
+    adjustLoose: v.number(),
+    reason: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const session = await ctx.db
+      .query("sessions")
+      .withIndex("by_token", (q: any) => q.eq("token", args.token))
+      .first();
+    if (!session || session.expiresAt < Date.now()) throw new Error("Unauthorized");
+    const user = await ctx.db.get(session.userId);
+    if (!user || !user.isActive) throw new Error("Unauthorized");
+
+    const product = await ctx.db.get(args.productId);
+    if (!product) throw new Error("Product not found");
+
+    const oldTrays = product.currentStockQtyTrays ?? 0;
+    const oldLoose = product.currentStockQtyLoose ?? 0;
+
+    let newTrays = oldTrays + args.adjustTrays;
+    let newLoose = oldLoose + args.adjustLoose;
+
+    if (newLoose < 0) {
+      const traysNeeded = Math.ceil(-newLoose / product.eggsPerTray);
+      newTrays -= traysNeeded;
+      newLoose += traysNeeded * product.eggsPerTray;
+    }
+
+    await ctx.db.patch(args.productId, {
+      currentStockQtyTrays: newTrays,
+      currentStockQtyLoose: newLoose,
+    });
+
+    await ctx.db.insert("stockChecks", {
+      date: Date.now(),
+      type: "MORNING",
+      productId: args.productId,
+      systemQtyTrays: oldTrays,
+      systemQtyLoose: oldLoose,
+      physicalQtyTrays: newTrays,
+      physicalQtyLoose: newLoose,
+      varianceTrays: args.adjustTrays,
+      varianceLoose: args.adjustLoose,
+      remarks: args.reason,
+    });
+
+    return { success: true };
+  },
+});
+
 export const performStockCheck = mutation({
   args: {
     type: v.union(v.literal("MORNING"), v.literal("EVENING")),
@@ -30,7 +84,6 @@ export const performStockCheck = mutation({
       const varianceTrays = check.physicalQtyTrays - product.currentStockQtyTrays;
       const varianceLoose = check.physicalQtyLoose - product.currentStockQtyLoose;
 
-      // Record the check
       await ctx.db.insert("stockChecks", {
         date: now,
         type: args.type,
@@ -44,7 +97,6 @@ export const performStockCheck = mutation({
         remarks: check.remarks,
       });
 
-      // Update stock to match physical count
       await ctx.db.patch(check.productId, {
         currentStockQtyTrays: check.physicalQtyTrays,
         currentStockQtyLoose: check.physicalQtyLoose,

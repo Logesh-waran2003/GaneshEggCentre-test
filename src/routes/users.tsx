@@ -3,6 +3,8 @@ import { useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
+import { toast } from "sonner";
+import { parseError } from "../lib/parseError";
 import {
   Card,
   CardContent,
@@ -63,7 +65,7 @@ function UsersPage() {
       setRole("EMPLOYEE");
       setShowForm(false);
     } catch (err: any) {
-      alert(err.message);
+      toast.error(parseError(err));
     }
   };
 

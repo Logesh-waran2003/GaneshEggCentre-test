@@ -8,6 +8,8 @@ import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { requireAuth } from "../../lib/auth";
+import { toast } from "sonner";
+import { parseError } from "../../lib/parseError";
 import { useTripDetails, useCompleteTrip, useApproveStartTrip, useApproveEndTrip, useTripExpenses, useTripProfitability, useAddTripExpense, useDeleteTripExpense } from "../../api/trips";
 import { useListActiveEmployees } from "../../api/users";
 import { TripExpenseCard } from "../../components/trips/TripExpenseCard";
@@ -56,7 +58,7 @@ function TripDetails() {
       await approveStart({ token: token!, tripId: tripId as Id<"saleTrips"> });
       router.invalidate();
     } catch (err) {
-      alert((err as Error).message);
+      toast.error(parseError(err));
     }
   };
 
@@ -79,7 +81,7 @@ function TripDetails() {
       setShowCompleteModal(false);
       router.invalidate();
     } catch (err) {
-      alert((err as Error).message);
+      toast.error(parseError(err));
     }
   };
 
@@ -88,13 +90,13 @@ function TripDetails() {
       await approveEnd({ token: token!, tripId: tripId as Id<"saleTrips"> });
       router.invalidate();
     } catch (err) {
-      alert((err as Error).message);
+      toast.error(parseError(err));
     }
   };
 
   const handleAddExpense = async () => {
     if (!expenseEmployee) {
-      alert("Please select an employee");
+      toast.warning("Please select an employee");
       return;
     }
     try {
@@ -110,7 +112,7 @@ function TripDetails() {
       setExpenseEmployee("");
       setShowExpenseModal(false);
     } catch (err) {
-      alert((err as Error).message);
+      toast.error(parseError(err));
     }
   };
 

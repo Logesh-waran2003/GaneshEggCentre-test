@@ -5,7 +5,10 @@ import { useState } from "react";
 import { useCreateContact } from "../../api/contacts";
 import { cn } from "../../lib/utils";
 
-export function ContactForm({ onClose }: { onClose: () => void }) {
+import { toast } from "sonner";
+import { parseError } from "../../lib/parseError";
+
+export function ContactForm({ onClose, onCreated }: { onClose: () => void; onCreated?: (id: string) => void }) {
   const createContact = useCreateContact();
   const [name, setName] = useState("");
   const [type, setType] = useState<"vendor" | "customer">("customer");
@@ -15,11 +18,11 @@ export function ContactForm({ onClose }: { onClose: () => void }) {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await createContact({ name, type, phone: phone || undefined, priceAdjustment: parseFloat(adjustment) || 0 });
+      const id = await createContact({ name, type, phone: phone || undefined, priceAdjustment: parseFloat(adjustment) || 0 });
+      onCreated?.(id as string);
       onClose();
     } catch (err) {
-      console.error(err);
-      alert("Failed to create contact");
+      toast.error(parseError(err));
     }
   };
 

@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
+import { toast } from "sonner";
+import { parseError } from "../lib/parseError";
 import { Card, CardContent } from "../components/ui/card";
 import {
   ArrowLeft,
@@ -59,7 +61,7 @@ function Ledger() {
       setRemarks("");
     } catch (err) {
       console.error(err);
-      alert("Failed to record payment");
+      toast.error(parseError(err));
     } finally {
       setIsSubmitting(false);
     }

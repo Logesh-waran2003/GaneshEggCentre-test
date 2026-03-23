@@ -54,8 +54,11 @@ function BottomNavigation() {
   const location = useLocation();
   const currentPath = location.pathname;
   const [showQuickActions, setShowQuickActions] = useState(false);
-  const { currentUser } = useAuth();
-  const isAdmin = currentUser?.role === "ADMIN";
+  const { currentUser: _currentUser } = useAuth();
+
+  useEffect(() => {
+    setShowQuickActions(false);
+  }, [currentPath]);
 
   const navItems = [
     {
@@ -155,8 +158,7 @@ function BottomNavigation() {
                 </div>
                 <span className="text-xs font-medium text-gray-700">Expense</span>
               </Link>
-              {isAdmin && (
-                <Link
+              <Link
                   to="/inventory"
                   className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-amber-50 transition-colors"
                   onClick={() => setShowQuickActions(false)}
@@ -166,7 +168,6 @@ function BottomNavigation() {
                   </div>
                   <span className="text-xs font-medium text-gray-700">Stock</span>
                 </Link>
-              )}
             </div>
           </div>
         </>

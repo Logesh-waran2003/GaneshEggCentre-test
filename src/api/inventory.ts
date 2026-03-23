@@ -10,3 +10,7 @@ export function useCurrentStock() {
 export function usePerformStockCheck() {
   return useMutation(api.inventory.performStockCheck);
 }
+
+export function useAdjustStock() {
+  return useMutation(api.inventory.adjustStock);
+}

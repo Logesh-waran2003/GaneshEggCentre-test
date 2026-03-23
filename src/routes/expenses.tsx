@@ -3,6 +3,8 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Card, CardContent } from "../components/ui/card";
 import { ArrowLeft, Plus, Trash2, Receipt } from "lucide-react";
+import { toast } from "sonner";
+import { parseError } from "../lib/parseError";
 import { useState } from "react";
 import { useExpenses, useCreateExpense, useDeleteExpense } from "../api/expenses";
 import { useListActiveEmployees } from "../api/users";
@@ -56,7 +58,7 @@ function Expenses() {
       setSelectedEmployee("");
       setShowForm(false);
     } catch (err) {
-      alert((err as Error).message);
+      toast.error(parseError(err));
     } finally {
       setIsSubmitting(false);
     }
@@ -68,7 +70,7 @@ function Expenses() {
     try {
       await deleteExpense({ token: token!, expenseId: expenseId as any });
     } catch (err) {
-      alert((err as Error).message);
+      toast.error(parseError(err));
     }
   };
 

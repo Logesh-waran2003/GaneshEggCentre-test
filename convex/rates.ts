@@ -21,6 +21,7 @@ export const setDailyRate = mutation({
     neccRatePerEgg: v.optional(v.number()),
     ratePerEgg: v.number(),
     ratePerTray: v.number(),
+    wholesaleRatePerTray: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const now = new Date();
@@ -38,6 +39,7 @@ export const setDailyRate = mutation({
         neccRatePerEgg: args.neccRatePerEgg,
         ratePerEgg: args.ratePerEgg,
         ratePerTray: args.ratePerTray,
+        wholesaleRatePerTray: args.wholesaleRatePerTray,
       });
     } else {
       await ctx.db.insert("dailyBoardRates", {
@@ -46,6 +48,7 @@ export const setDailyRate = mutation({
         neccRatePerEgg: args.neccRatePerEgg,
         ratePerEgg: args.ratePerEgg,
         ratePerTray: args.ratePerTray,
+        wholesaleRatePerTray: args.wholesaleRatePerTray,
       });
     }
     return { success: true };

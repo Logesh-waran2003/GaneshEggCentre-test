@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { toast } from "sonner";
+import { parseError } from "../../lib/parseError";
 import { Card, CardContent } from "../ui/card";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
@@ -54,7 +56,7 @@ export function StockCheckForm({ products, onClose }: StockCheckFormProps) {
       onClose();
     } catch (error) {
       console.error("Failed to submit stock check", error);
-      alert("Failed to submit stock check");
+      toast.error(parseError(error));
     } finally {
       setIsSubmitting(false);
     }

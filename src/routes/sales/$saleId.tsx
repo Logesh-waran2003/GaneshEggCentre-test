@@ -1,14 +1,16 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Card, CardContent } from "../../components/ui/card";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
-import { ArrowLeft, ShoppingBag, User, Pencil, Check, X } from "lucide-react";
+import { ArrowLeft, ShoppingBag, User, Pencil, Check, X, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { requireAuth } from "../../lib/auth";
-import { useSales, useUpdateSale } from "../../api/transactions";
+import { useSales, useUpdateSale, useDeleteSale } from "../../api/transactions";
 import { Id } from "../../../convex/_generated/dataModel";
+import { toast } from "sonner";
+import { parseError } from "../../lib/parseError";
 
 export const Route = createFileRoute("/sales/$saleId")({
   beforeLoad: requireAuth,
@@ -19,16 +21,17 @@ function SaleDetail() {
   const { saleId } = Route.useParams();
   const { token, currentUser } = useAuth();
   const isAdmin = currentUser?.role === "ADMIN";
+  const navigate = useNavigate();
 
-  // Fetch today's sales and find the one matching saleId
-  // We use a broad date range by passing undefined (today)
   const { data: sales } = useSales(token, undefined);
   const updateSale = useUpdateSale();
+  const deleteSale = useDeleteSale();
 
   const sale = sales.find((s: any) => s._id === saleId);
 
   const [editingRemarks, setEditingRemarks] = useState(false);
   const [remarks, setRemarks] = useState("");
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   if (!sale) {
     return (
@@ -58,7 +61,16 @@ function SaleDetail() {
       });
       setEditingRemarks(false);
     } catch (err) {
-      alert((err as Error).message);
+      toast.error(parseError(err));
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      await deleteSale({ token: token!, transactionId: saleId as Id<"transactions"> });
+      navigate({ to: "/sales" });
+    } catch (err) {
+      toast.error(parseError(err));
     }
   };
 
@@ -74,7 +86,23 @@ function SaleDetail() {
           <Link to="/sales" className="p-2 rounded-2xl hover:bg-gray-100">
             <ArrowLeft className="size-6 text-gray-600" />
           </Link>
-          <h1 className="text-2xl font-bold text-indigo-950">Sale Details</h1>
+          <h1 className="text-2xl font-bold text-indigo-950 flex-1">Sale Details</h1>
+          {isAdmin && !confirmDelete && (
+            <button onClick={() => setConfirmDelete(true)} className="p-2 rounded-2xl hover:bg-red-50 text-red-400">
+              <Trash2 className="size-5" />
+            </button>
+          )}
+          {isAdmin && confirmDelete && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-red-500 font-medium">Delete?</span>
+              <button onClick={handleDelete} className="p-1.5 rounded-xl bg-red-100 text-red-600">
+                <Check className="size-4" />
+              </button>
+              <button onClick={() => setConfirmDelete(false)} className="p-1.5 rounded-xl bg-gray-100 text-gray-500">
+                <X className="size-4" />
+              </button>
+            </div>
+          )}
         </header>
 
         {/* Customer + amount */}

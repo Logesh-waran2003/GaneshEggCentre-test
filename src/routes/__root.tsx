@@ -12,6 +12,7 @@ import appCss from "../styles.css?url";
 import { QueryClient } from "@tanstack/react-query";
 import { MobileAppShell } from "../components/layout/MobileAppShell";
 import { DevPanel } from "../components/layout/DevPanel";
+import { Toaster } from "../components/ui/sonner";
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   state = { error: null };
@@ -96,6 +97,7 @@ function RootComponent() {
 
   return (
     <ErrorBoundary>
+      <Toaster position="top-center" richColors />
       <MobileAppShell>
         <Outlet />
         {import.meta.env.DEV && <DevPanel />}

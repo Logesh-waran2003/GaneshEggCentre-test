@@ -6,6 +6,7 @@ export interface Rate {
   neccRatePerEgg?: number;
   ratePerEgg: number;
   ratePerTray: number;
+  wholesaleRatePerTray?: number;
   date: number;
   _creationTime: number;
 }

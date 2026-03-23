@@ -13,8 +13,9 @@ import { Contact } from "../../types/contact";
 import { CustomerSelector } from "../../components/sales/CustomerSelector";
 import { SaleItemList } from "../../components/sales/SaleItemList";
 import { SaleSummary } from "../../components/sales/SaleSummary";
-import { SaleErrorDialog } from "../../components/sales/SaleConfirmDialog";
 import { ContactForm } from "../../components/contacts/ContactForm";
+import { toast } from "sonner";
+import { parseError } from "../../lib/parseError";
 
 export const Route = createFileRoute("/sales/new")({
   beforeLoad: requireAuth,
@@ -43,8 +44,6 @@ function NewSale() {
   const [cashCollectedEnabled, setCashCollectedEnabled] = useState(false);
   const [cashCollected, setCashCollected] = useState("");
   const [showNewContact, setShowNewContact] = useState(false);
-  const [showError, setShowError] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Auto-select walk-in if ?walkIn=true
@@ -118,10 +117,7 @@ function NewSale() {
       });
       router.navigate({ to: "/" });
     } catch (err) {
-      const errorMsg = (err as Error).message;
-      const match = errorMsg.match(/Uncaught Error: (.+?)(?:\n|$)/);
-      setErrorMessage(match ? match[1] : errorMsg);
-      setShowError(true);
+      toast.error(parseError(err));
     } finally {
       setIsSubmitting(false);
     }
@@ -151,7 +147,14 @@ function NewSale() {
 
         {showNewContact ? (
           <div className="mb-4">
-            <ContactForm onClose={() => setShowNewContact(false)} />
+            <ContactForm
+              onClose={() => setShowNewContact(false)}
+              onCreated={(id) => {
+                const contact = contacts.find((c: Contact) => c._id === id);
+                if (contact) handleSelectContact(contact);
+                setShowNewContact(false);
+              }}
+            />
           </div>
         ) : (
           <CustomerSelector
@@ -203,12 +206,6 @@ function NewSale() {
           isSubmitting={isSubmitting}
         />
       )}
-
-      <SaleErrorDialog
-        open={showError}
-        message={errorMessage}
-        onClose={() => setShowError(false)}
-      />
     </div>
   );
 }
