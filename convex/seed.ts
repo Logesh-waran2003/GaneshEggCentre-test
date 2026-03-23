@@ -7,22 +7,26 @@ export const seed = mutation({
 
     await ctx.db.insert("products", {
       name: "White Large",
-      currentStockQtyTrays: 100,
+      eggsPerTray: 30,
+      currentStockQtyTrays: 0,
       currentStockQtyLoose: 0,
     });
     await ctx.db.insert("products", {
       name: "White Medium",
-      currentStockQtyTrays: 80,
+      eggsPerTray: 30,
+      currentStockQtyTrays: 0,
       currentStockQtyLoose: 0,
     });
     await ctx.db.insert("products", {
       name: "Brown Large",
-      currentStockQtyTrays: 50,
+      eggsPerTray: 30,
+      currentStockQtyTrays: 0,
       currentStockQtyLoose: 0,
     });
     await ctx.db.insert("products", {
       name: "Brown Medium",
-      currentStockQtyTrays: 40,
+      eggsPerTray: 30,
+      currentStockQtyTrays: 0,
       currentStockQtyLoose: 0,
     });
   },

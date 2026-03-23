@@ -1,0 +1,15 @@
+# DO NOT MODIFY - Project Rules
+
+This directory contains project rules and guidelines.
+
+Files:
+- `RULES.md` - Complete development rules and standards
+- `README.md` - Quick reference for AI assistants
+
+These rules ensure:
+- Consistent code architecture
+- Mobile-first PWA best practices
+- Proper use of shadcn/ui and TanStack
+- Type safety and maintainability
+
+Always follow these rules when working on this project.

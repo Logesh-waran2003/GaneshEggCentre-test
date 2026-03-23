@@ -1,9 +1,23 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 
+async function requireAuth(ctx: any, token: string) {
+  const session = await ctx.db
+    .query("sessions")
+    .withIndex("by_token", (q: any) => q.eq("token", token))
+    .first();
+  if (!session || session.expiresAt < Date.now()) {
+    throw new Error("Unauthorized");
+  }
+  const user = await ctx.db.get(session.userId);
+  if (!user || !user.isActive) throw new Error("Unauthorized");
+  return user;
+}
+
 export const createTransaction = mutation({
   args: {
-    contactId: v.id("contacts"),
+    token: v.string(),
+    contactId: v.optional(v.id("contacts")),
     type: v.union(
       v.literal("SALE"),
       v.literal("PURCHASE"),
@@ -13,6 +27,8 @@ export const createTransaction = mutation({
     amount: v.number(),
     date: v.number(),
     description: v.optional(v.string()),
+    cashCollected: v.optional(v.number()),
+    salesTripId: v.optional(v.id("saleTrips")),
     items: v.optional(
       v.array(
         v.object({
@@ -26,17 +42,59 @@ export const createTransaction = mutation({
     ),
   },
   handler: async (ctx, args) => {
-    // 1. Create Transaction
+    const user = await requireAuth(ctx, args.token);
+
+    // 1. Create transaction
     const transactionId = await ctx.db.insert("transactions", {
       contactId: args.contactId,
       type: args.type,
       amount: args.amount,
       date: args.date,
       description: args.description,
+      cashCollected: args.cashCollected,
+      salesTripId: args.salesTripId,
+      createdBy: user._id,
     });
 
-    // 2. Handle Items and Stock
+    // 2. If cash collected on SALE with a contact, create PAYMENT_IN
+    if (args.contactId && args.type === "SALE" && args.cashCollected && args.cashCollected > 0) {
+      await ctx.db.insert("transactions", {
+        contactId: args.contactId,
+        type: "PAYMENT_IN",
+        amount: args.cashCollected,
+        date: args.date,
+        description: `Cash collected for sale`,
+        relatedTransactionId: transactionId,
+        createdBy: user._id,
+      });
+    }
+
+    // 3. Handle Items and Stock
     if (args.items) {
+      // First validate stock for SALE transactions
+      if (args.type === "SALE") {
+        for (const item of args.items) {
+          const product = await ctx.db.get(item.productId);
+          if (!product) {
+            throw new Error(`Product not found: ${item.productId}`);
+          }
+          
+          const availableTrays = product.currentStockQtyTrays ?? 0;
+          const availableLoose = product.currentStockQtyLoose ?? 0;
+          const eggsPerTray = product.eggsPerTray ?? 30;
+
+          const totalAvailable = availableTrays * eggsPerTray + availableLoose;
+          const totalRequested = item.qtyTrays * eggsPerTray + item.qtyLoose;
+
+          if (totalRequested > totalAvailable) {
+            throw new Error(
+              `Insufficient stock for ${product.name}: Need ${item.qtyTrays} trays + ${item.qtyLoose} loose, only ${availableTrays} trays + ${availableLoose} loose available`
+            );
+          }
+        }
+      }
+
+      // Now process items and update stock
       for (const item of args.items) {
         await ctx.db.insert("transactionItems", {
           transactionId,
@@ -50,40 +108,226 @@ export const createTransaction = mutation({
         // Update Stock
         const product = await ctx.db.get(item.productId);
         if (product) {
-          const stockChangeTrays =
-            args.type === "PURCHASE" ? item.qtyTrays : -item.qtyTrays;
-          const stockChangeLoose =
-            args.type === "PURCHASE" ? item.qtyLoose : -item.qtyLoose;
-
-          await ctx.db.patch(item.productId, {
-            currentStockQtyTrays:
-              (product.currentStockQtyTrays ?? 0) + stockChangeTrays,
-            currentStockQtyLoose:
-              (product.currentStockQtyLoose ?? 0) +
-              stockChangeLoose -
-              (item.breakageQty ?? 0),
-          });
+          if (args.type === "PURCHASE") {
+            await ctx.db.patch(item.productId, {
+              currentStockQtyTrays: (product.currentStockQtyTrays ?? 0) + item.qtyTrays,
+              currentStockQtyLoose: (product.currentStockQtyLoose ?? 0) + item.qtyLoose,
+            });
+          } else {
+            let newLoose = (product.currentStockQtyLoose ?? 0) - item.qtyLoose - (item.breakageQty ?? 0);
+            let newTrays = (product.currentStockQtyTrays ?? 0) - item.qtyTrays;
+            if (newLoose < 0) {
+              const traysNeeded = Math.ceil(-newLoose / product.eggsPerTray);
+              newTrays -= traysNeeded;
+              newLoose += traysNeeded * product.eggsPerTray;
+            }
+            await ctx.db.patch(item.productId, {
+              currentStockQtyTrays: newTrays,
+              currentStockQtyLoose: newLoose,
+            });
+          }
         }
       }
     }
 
-    // 3. Update Contact Balance
-    const contact = await ctx.db.get(args.contactId);
-    if (contact) {
-      let balanceChange = 0;
-      if (args.type === "SALE") balanceChange = args.amount;
-      else if (args.type === "PURCHASE") balanceChange = -args.amount;
-      else if (args.type === "PAYMENT_IN") balanceChange = -args.amount;
-      else if (args.type === "PAYMENT_OUT") balanceChange = args.amount;
+    // 4. Update Contact Balance (only if contactId provided)
+    if (args.contactId) {
+      const contact = await ctx.db.get(args.contactId);
+      if (contact) {
+        let balanceChange = 0;
 
-      await ctx.db.patch(args.contactId, {
-        currentBalance: (contact.currentBalance ?? 0) + balanceChange,
-      });
+        if (args.type === "SALE") {
+          const creditAmount = args.cashCollected
+            ? args.amount - args.cashCollected
+            : args.amount;
+          balanceChange = creditAmount;
+        } else if (args.type === "PURCHASE") {
+          balanceChange = -args.amount;
+        } else if (args.type === "PAYMENT_IN") {
+          balanceChange = -args.amount;
+        } else if (args.type === "PAYMENT_OUT") {
+          balanceChange = args.amount;
+        }
+
+        await ctx.db.patch(args.contactId, {
+          currentBalance: (contact.currentBalance ?? 0) + balanceChange,
+        });
+      }
     }
 
     return transactionId;
   },
 });
+
+export const getSales = query({
+  args: {
+    token: v.string(),
+    date: v.optional(v.number()), // start of day timestamp
+  },
+  handler: async (ctx, args) => {
+    const user = await requireAuth(ctx, args.token);
+
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const startOfDay = args.date ?? now.getTime();
+    const endOfDay = startOfDay + 86400000;
+
+    const allSales = await ctx.db
+      .query("transactions")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("type"), "SALE"),
+          q.gte(q.field("date"), startOfDay),
+          q.lt(q.field("date"), endOfDay)
+        )
+      )
+      .order("desc")
+      .collect();
+
+    const sales = user.role === "ADMIN"
+      ? allSales
+      : allSales.filter((t) => t.createdBy === user._id);
+
+    const result = [];
+    for (const tx of sales) {
+      const contact = tx.contactId ? await ctx.db.get(tx.contactId) : null;
+      const creator = tx.createdBy ? await ctx.db.get(tx.createdBy) : null;
+      const items = await ctx.db
+        .query("transactionItems")
+        .withIndex("by_transactionId", (q) => q.eq("transactionId", tx._id))
+        .collect();
+      const itemsWithProduct = [];
+      for (const item of items) {
+        const product = await ctx.db.get(item.productId);
+        itemsWithProduct.push({ ...item, product });
+      }
+      result.push({ ...tx, contact, creator, items: itemsWithProduct });
+    }
+    return result;
+  },
+});
+
+export const getPurchases = query({
+  args: {
+    token: v.string(),
+    date: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const user = await requireAuth(ctx, args.token);
+
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const startOfDay = args.date ?? now.getTime();
+    const endOfDay = startOfDay + 86400000;
+
+    const allPurchases = await ctx.db
+      .query("transactions")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("type"), "PURCHASE"),
+          q.gte(q.field("date"), startOfDay),
+          q.lt(q.field("date"), endOfDay)
+        )
+      )
+      .order("desc")
+      .collect();
+
+    const purchases = user.role === "ADMIN"
+      ? allPurchases
+      : allPurchases.filter((t) => t.createdBy === user._id);
+
+    const result = [];
+    for (const tx of purchases) {
+      const contact = tx.contactId ? await ctx.db.get(tx.contactId) : null;
+      const creator = tx.createdBy ? await ctx.db.get(tx.createdBy) : null;
+      const items = await ctx.db
+        .query("transactionItems")
+        .withIndex("by_transactionId", (q) => q.eq("transactionId", tx._id))
+        .collect();
+      const itemsWithProduct = [];
+      for (const item of items) {
+        const product = await ctx.db.get(item.productId);
+        itemsWithProduct.push({ ...item, product });
+      }
+      result.push({ ...tx, contact, creator, items: itemsWithProduct });
+    }
+    return result;
+  },
+});
+
+
+export const updateSale = mutation({
+  args: {
+    token: v.string(),
+    transactionId: v.id("transactions"),
+    description: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const user = await requireAuth(ctx, args.token);
+    const tx = await ctx.db.get(args.transactionId);
+    if (!tx) throw new Error("Sale not found");
+    if (user.role !== "ADMIN" && tx.createdBy !== user._id) {
+      throw new Error("Not authorized");
+    }
+    await ctx.db.patch(args.transactionId, {
+      description: args.description,
+    });
+  },
+});
+
+
+export const deleteSale = mutation({
+  args: {
+    token: v.string(),
+    transactionId: v.id("transactions"),
+  },
+  handler: async (ctx, args) => {
+    const user = await requireAuth(ctx, args.token);
+    if (user.role !== "ADMIN") throw new Error("Not authorized");
+
+    const tx = await ctx.db.get(args.transactionId);
+    if (!tx) throw new Error("Sale not found");
+
+    // Reverse stock for all items
+    const items = await ctx.db
+      .query("transactionItems")
+      .withIndex("by_transactionId", (q) => q.eq("transactionId", args.transactionId))
+      .collect();
+
+    for (const item of items) {
+      const product = await ctx.db.get(item.productId);
+      if (product) {
+        await ctx.db.patch(item.productId, {
+          currentStockQtyTrays: (product.currentStockQtyTrays ?? 0) + item.qtyTrays,
+          currentStockQtyLoose: (product.currentStockQtyLoose ?? 0) + item.qtyLoose + (item.breakageQty ?? 0),
+        });
+      }
+      await ctx.db.delete(item._id);
+    }
+
+    // Reverse balance change
+    if (tx.contactId) {
+      const contact = await ctx.db.get(tx.contactId);
+      if (contact) {
+        const creditAmount = tx.cashCollected ? tx.amount - tx.cashCollected : tx.amount;
+        await ctx.db.patch(tx.contactId, {
+          currentBalance: (contact.currentBalance ?? 0) - creditAmount,
+        });
+      }
+      // Delete related PAYMENT_IN if any
+      const related = await ctx.db
+        .query("transactions")
+        .withIndex("by_contactId", (q) => q.eq("contactId", tx.contactId!))
+        .filter((q) => q.eq(q.field("relatedTransactionId"), args.transactionId))
+        .first();
+      if (related) await ctx.db.delete(related._id);
+    }
+
+    await ctx.db.delete(args.transactionId);
+    return { success: true };
+  },
+});
+
 
 export const getContactTransactions = query({
   args: { contactId: v.id("contacts") },
@@ -114,13 +358,14 @@ export const getContactTransactions = query({
 });
 
 export const getDashboardStats = query({
-  args: {},
-  handler: async (ctx) => {
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    const user = await requireAuth(ctx, args.token);
     const now = new Date();
     now.setHours(0, 0, 0, 0);
     const startOfToday = now.getTime();
 
-    const todaySales = await ctx.db
+    const allSales = await ctx.db
       .query("transactions")
       .filter((q) =>
         q.and(
@@ -130,7 +375,12 @@ export const getDashboardStats = query({
       )
       .collect();
 
-    const todayPayments = await ctx.db
+    // Employees only see their own sales
+    const todaySales = user.role === "ADMIN"
+      ? allSales
+      : allSales.filter((t) => t.createdBy === user._id);
+
+    const allPayments = await ctx.db
       .query("transactions")
       .filter((q) =>
         q.and(
@@ -140,14 +390,12 @@ export const getDashboardStats = query({
       )
       .collect();
 
-    const totalSalesAmount = todaySales.reduce(
-      (acc, curr) => acc + curr.amount,
-      0
-    );
-    const totalPaymentsAmount = todayPayments.reduce(
-      (acc, curr) => acc + curr.amount,
-      0
-    );
+    const todayPayments = user.role === "ADMIN"
+      ? allPayments
+      : allPayments.filter((t) => t.createdBy === user._id);
+
+    const totalSalesAmount = todaySales.reduce((acc, curr) => acc + curr.amount, 0);
+    const totalPaymentsAmount = todayPayments.reduce((acc, curr) => acc + curr.amount, 0);
 
     let totalTraysSold = 0;
     for (const sale of todaySales) {
@@ -164,5 +412,28 @@ export const getDashboardStats = query({
       totalTraysSold,
       salesCount: todaySales.length,
     };
+  },
+});
+
+export const getTransactionsByEmployee = query({
+  args: {
+    employeeId: v.id("users"),
+    startDate: v.optional(v.number()),
+    endDate: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    let transactions = await ctx.db
+      .query("transactions")
+      .filter((q) => q.eq(q.field("createdBy"), args.employeeId))
+      .collect();
+
+    if (args.startDate) {
+      transactions = transactions.filter((t) => t.date >= args.startDate!);
+    }
+    if (args.endDate) {
+      transactions = transactions.filter((t) => t.date <= args.endDate!);
+    }
+
+    return transactions;
   },
 });

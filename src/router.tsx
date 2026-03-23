@@ -4,6 +4,7 @@ import { QueryClient } from "@tanstack/react-query";
 import { routerWithQueryClient } from "@tanstack/react-router-with-query";
 import { ConvexQueryClient } from "@convex-dev/react-query";
 import { ConvexProvider } from "convex/react";
+import { AuthProvider } from "./contexts/AuthContext";
 
 export function getRouter() {
   const CONVEX_URL = (import.meta as any).env.VITE_CONVEX_URL!;
@@ -29,7 +30,9 @@ export function getRouter() {
       scrollRestoration: true,
       Wrap: ({ children }) => (
         <ConvexProvider client={convexQueryClient.convexClient}>
-          {children}
+          <AuthProvider>
+            {children}
+          </AuthProvider>
         </ConvexProvider>
       ),
     }),

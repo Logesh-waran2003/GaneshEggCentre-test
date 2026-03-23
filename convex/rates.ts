@@ -16,7 +16,13 @@ export const getTodayRates = query({
 });
 
 export const setDailyRate = mutation({
-  args: { eggType: v.string(), rate: v.number() },
+  args: {
+    productId: v.id("products"),
+    neccRatePerEgg: v.optional(v.number()),
+    ratePerEgg: v.number(),
+    ratePerTray: v.number(),
+    wholesaleRatePerTray: v.optional(v.number()),
+  },
   handler: async (ctx, args) => {
     const now = new Date();
     now.setHours(0, 0, 0, 0);
@@ -25,16 +31,24 @@ export const setDailyRate = mutation({
     const existing = await ctx.db
       .query("dailyBoardRates")
       .withIndex("by_date", (q) => q.gte("date", startOfToday))
-      .filter((q) => q.eq(q.field("eggType"), args.eggType))
+      .filter((q) => q.eq(q.field("productId"), args.productId))
       .first();
 
     if (existing) {
-      await ctx.db.patch(existing._id, { ratePerEgg: args.rate });
+      await ctx.db.patch(existing._id, {
+        neccRatePerEgg: args.neccRatePerEgg,
+        ratePerEgg: args.ratePerEgg,
+        ratePerTray: args.ratePerTray,
+        wholesaleRatePerTray: args.wholesaleRatePerTray,
+      });
     } else {
       await ctx.db.insert("dailyBoardRates", {
         date: startOfToday,
-        eggType: args.eggType,
-        ratePerEgg: args.rate,
+        productId: args.productId,
+        neccRatePerEgg: args.neccRatePerEgg,
+        ratePerEgg: args.ratePerEgg,
+        ratePerTray: args.ratePerTray,
+        wholesaleRatePerTray: args.wholesaleRatePerTray,
       });
     }
     return { success: true };

@@ -1,6 +1,8 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
+import { toast } from "sonner";
+import { parseError } from "../lib/parseError";
 import {
   Card,
   CardContent,
@@ -9,43 +11,59 @@ import {
 } from "../components/ui/card";
 import { ArrowLeft, Check } from "lucide-react";
 import { useState } from "react";
-import { convexQuery } from "@convex-dev/react-query";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { useMutation } from "convex/react";
-import { api } from "../../convex/_generated/api";
+import { requireAdmin } from "../lib/auth";
+import { useTodayRates, useSetDailyRate } from "../api/rates";
+import { useProducts } from "../api/products";
+import { Rate } from "../types/rate";
+import { Id } from "../../convex/_generated/dataModel";
 
 export const Route = createFileRoute("/setup")({
+  beforeLoad: requireAdmin,
   component: Setup,
 });
 
 function Setup() {
-  const { data: rates } = useSuspenseQuery(
-    convexQuery(api.rates.getTodayRates, {})
-  );
-  const setDailyRate = useMutation(api.rates.setDailyRate);
+  const { data: rates } = useTodayRates();
+  const { data: products } = useProducts();
+  const setDailyRate = useSetDailyRate();
   const router = useRouter();
 
-  const [whiteRate, setWhiteRate] = useState(
-    rates.find((r: any) => r.eggType === "White")?.ratePerEgg || ""
-  );
-  const [brownRate, setBrownRate] = useState(
-    rates.find((r: any) => r.eggType === "Brown")?.ratePerEgg || ""
-  );
+  const [productRates, setProductRates] = useState<
+    Record<string, { neccPerEgg: string; perEgg: string; perTray: string; wholesaleTray: string }>
+  >(() => {
+    const initial: Record<string, { neccPerEgg: string; perEgg: string; perTray: string; wholesaleTray: string }> = {};
+    products.forEach((product) => {
+      const rate = rates.find((r: Rate) => r.productId === product._id);
+      initial[product._id] = {
+        neccPerEgg: rate?.neccRatePerEgg?.toString() || "",
+        perEgg: rate?.ratePerEgg?.toString() || "",
+        perTray: rate?.ratePerTray?.toString() || "",
+        wholesaleTray: rate?.wholesaleRatePerTray?.toString() || "",
+      };
+    });
+    return initial;
+  });
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
     try {
-      if (whiteRate)
-        await setDailyRate({ eggType: "White", rate: Number(whiteRate) });
-      if (brownRate)
-        await setDailyRate({ eggType: "Brown", rate: Number(brownRate) });
-
+      for (const product of products) {
+        const rate = productRates[product._id];
+        if (rate?.perEgg && rate?.perTray) {
+          await setDailyRate({
+            productId: product._id as Id<"products">,
+            neccRatePerEgg: rate.neccPerEgg ? Number(rate.neccPerEgg) : undefined,
+            ratePerEgg: Number(rate.perEgg),
+            ratePerTray: Number(rate.perTray),
+            wholesaleRatePerTray: rate.wholesaleTray ? Number(rate.wholesaleTray) : undefined,
+          });
+        }
+      }
       router.navigate({ to: "/" });
     } catch (err) {
-      console.error(err);
-      alert("Failed to save rates");
+      toast.error(parseError(err));
     } finally {
       setIsSaving(false);
     }
@@ -73,44 +91,107 @@ function Setup() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSave} className="space-y-6 pt-4">
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-gray-500 uppercase tracking-tighter ml-1">
-                White Egg Rate
-              </label>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xl font-bold text-gray-300">
-                  ₹
-                </span>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={whiteRate}
-                  onChange={(e) => setWhiteRate(e.target.value)}
-                  className="pl-10 text-2xl font-black text-indigo-950 h-20"
-                  placeholder="0.00"
-                  required
-                />
+            {products.map((product) => (
+              <div key={product._id} className="space-y-3 pb-4 border-b border-gray-100 last:border-0">
+                <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">
+                  {product.name}
+                </h3>
+                <div className="grid grid-cols-4 gap-3">
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">NECC Rate</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-gray-300">₹</span>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={productRates[product._id]?.neccPerEgg || ""}
+                        onChange={(e) => {
+                          const neccPerEgg = e.target.value;
+                          setProductRates((prev) => {
+                            const cur = prev[product._id] ?? { neccPerEgg: "", perEgg: "", perTray: "", wholesaleTray: "" };
+                            return { ...prev, [product._id]: { ...cur, neccPerEgg } };
+                          });
+                        }}
+                        className="pl-7 font-bold text-indigo-950 h-12"
+                        placeholder="0.00"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">Selling Rate</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-gray-300">₹</span>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={productRates[product._id]?.perEgg || ""}
+                        onChange={(e) => {
+                          const perEgg = e.target.value;
+                          const perTray = perEgg ? (Number(perEgg) * product.eggsPerTray).toFixed(2) : "";
+                          setProductRates((prev) => {
+                            const cur = prev[product._id] ?? { neccPerEgg: "", perEgg: "", perTray: "", wholesaleTray: "" };
+                            return { ...prev, [product._id]: { ...cur, perEgg, perTray } };
+                          });
+                        }}
+                        className="pl-7 font-bold text-indigo-950 h-12"
+                        placeholder="0.00"
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">Per Tray</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-gray-300">₹</span>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={productRates[product._id]?.perTray || ""}
+                        onChange={(e) => {
+                          const perTray = e.target.value;
+                          setProductRates((prev) => {
+                            const cur = prev[product._id] ?? { neccPerEgg: "", perEgg: "", perTray: "", wholesaleTray: "" };
+                            return { ...prev, [product._id]: { ...cur, perTray } };
+                          });
+                        }}
+                        className="pl-7 font-bold text-indigo-950 h-12"
+                        placeholder="0.00"
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">Wholesale</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-gray-300">₹</span>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={productRates[product._id]?.wholesaleTray || ""}
+                        onChange={(e) => {
+                          const wholesaleTray = e.target.value;
+                          setProductRates((prev) => {
+                            const cur = prev[product._id] ?? { neccPerEgg: "", perEgg: "", perTray: "", wholesaleTray: "" };
+                            return { ...prev, [product._id]: { ...cur, wholesaleTray } };
+                          });
+                        }}
+                        className="pl-7 font-bold text-indigo-950 h-12"
+                        placeholder="0.00"
+                      />
+                    </div>
+                  </div>
+                </div>
+                {(() => {
+                  const r = productRates[product._id];
+                  const margin = r?.neccPerEgg && r?.perEgg ? Number(r.perEgg) - Number(r.neccPerEgg) : null;
+                  return margin !== null ? (
+                    <p className={`text-xs font-bold mt-1 ${margin >= 0 ? "text-emerald-600" : "text-red-500"}`}>
+                      Margin: {margin >= 0 ? "+" : ""}₹{margin.toFixed(2)}/egg
+                    </p>
+                  ) : null;
+                })()}
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-gray-500 uppercase tracking-tighter ml-1">
-                Brown Egg Rate
-              </label>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xl font-bold text-gray-300">
-                  ₹
-                </span>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={brownRate}
-                  onChange={(e) => setBrownRate(e.target.value)}
-                  className="pl-10 text-2xl font-black text-amber-800 h-20"
-                  placeholder="0.00"
-                />
-              </div>
-            </div>
+            ))}
 
             <div className="pt-4 sticky bottom-4">
               <Button
