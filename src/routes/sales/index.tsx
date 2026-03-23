@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { requireAuth } from "../../lib/auth";
 import { useSales } from "../../api/transactions";
+import { CalendarPicker } from "../../components/ui/CalendarPicker";
 
 export const Route = createFileRoute("/sales/")({
   beforeLoad: requireAuth,
@@ -27,8 +28,6 @@ function SalesList() {
   const totalAmount = sales.reduce((s: number, t: any) => s + t.amount, 0);
   const totalCash = sales.reduce((s: number, t: any) => s + (t.cashCollected ?? 0), 0);
 
-  const dateInputValue = new Date(selectedDate).toISOString().split("T")[0];
-
   return (
     <div className="bg-gray-50 pb-24">
       <div className="p-4 max-w-md mx-auto">
@@ -41,16 +40,7 @@ function SalesList() {
 
         {/* Date picker */}
         <div className="mb-4">
-          <input
-            type="date"
-            value={dateInputValue}
-            onChange={(e) => {
-              const d = new Date(e.target.value);
-              d.setHours(0, 0, 0, 0);
-              setSelectedDate(d.getTime());
-            }}
-            className="w-full h-11 px-4 rounded-2xl border border-gray-200 bg-white text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-300"
-          />
+          <CalendarPicker value={selectedDate} onChange={setSelectedDate} />
         </div>
 
         {/* Summary */}
@@ -113,7 +103,7 @@ function SalesList() {
                     </div>
 
                     {sale.description && (
-                      <p className="text-xs text-gray-400 mt-1 italic">{sale.description}</p>
+                      <p className="text-xs text-gray-400 mt-1 italic break-words">{sale.description}</p>
                     )}
                   </CardContent>
                 </Card>

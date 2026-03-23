@@ -251,12 +251,7 @@ function ContactDetail() {
                             <div className="text-xs text-gray-500 space-y-0.5 mt-1">
                               {hasTrays && (
                                 <p>
-                                  {item.qtyTrays} trays @ ₹
-                                  {(
-                                    item.rateApplied *
-                                    (item.product?.eggsPerTray || 30)
-                                  ).toFixed(2)}
-                                  /tray
+                                  {item.qtyTrays} trays @ ₹{item.rateApplied}/egg · ₹{(item.rateApplied * (item.product?.eggsPerTray || 30)).toFixed(0)}/tray
                                 </p>
                               )}
                               {hasLoose && (

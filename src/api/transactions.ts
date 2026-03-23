@@ -27,3 +27,13 @@ export function useSales(token: string | null, date?: number) {
 export function useUpdateSale() {
   return useMutation(api.transactions.updateSale);
 }
+
+export function useDeleteSale() {
+  return useMutation(api.transactions.deleteSale);
+}
+
+export function usePurchases(token: string | null, date?: number) {
+  return useSuspenseQuery(
+    convexQuery(api.transactions.getPurchases, { token: token ?? "", date })
+  );
+}

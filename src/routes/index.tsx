@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Card, CardContent } from "../components/ui/card";
 import { EggLoader } from "../components/ui/EggLoader";
-import { TrendingUp, ShoppingCart, Package, Users, Receipt, BarChart3, ShoppingBag, Wallet, ClipboardList } from "lucide-react";
+import { TrendingUp, ShoppingCart, Package, Users, Receipt, BarChart3, ShoppingBag, Wallet, ClipboardList, PackageOpen } from "lucide-react";
 import { useDashboardStats } from "../api/transactions";
 import { useTodayRates } from "../api/rates";
 import { useProducts } from "../api/products";
@@ -223,6 +223,15 @@ function Home() {
               <ClipboardList className="size-6 text-violet-600" />
             </div>
             <span className="text-xs font-bold text-gray-700 text-center">Sales</span>
+          </Link>
+          <Link
+            to="/purchases"
+            className="flex flex-col items-center gap-2 p-4 bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-gray-100"
+          >
+            <div className="bg-green-100 p-3 rounded-full">
+              <PackageOpen className="size-6 text-green-600" />
+            </div>
+            <span className="text-xs font-bold text-gray-700 text-center">Purchases</span>
           </Link>
           <Link
             to="/contacts"

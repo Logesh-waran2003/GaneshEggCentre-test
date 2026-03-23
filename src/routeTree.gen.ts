@@ -21,13 +21,18 @@ import { Route as InventoryRouteImport } from './routes/inventory'
 import { Route as IntakeRouteImport } from './routes/intake'
 import { Route as ExpensesRouteImport } from './routes/expenses'
 import { Route as ContactsRouteImport } from './routes/contacts'
+import { Route as PurchasesRouteImport } from './routes/purchases'
 import { Route as AdminTripsRouteImport } from './routes/admin-trips'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TripsIndexRouteImport } from './routes/trips/index'
+import { Route as SalesIndexRouteImport } from './routes/sales/index'
+import { Route as PurchasesIndexRouteImport } from './routes/purchases/index'
+import { Route as PurchasesPurchaseIdRouteImport } from './routes/purchases/$purchaseId'
 import { Route as ContactsIndexRouteImport } from './routes/contacts.index'
 import { Route as TripsNewRouteImport } from './routes/trips/new'
 import { Route as TripsTripIdRouteImport } from './routes/trips/$tripId'
 import { Route as SalesNewRouteImport } from './routes/sales/new'
+import { Route as SalesSaleIdRouteImport } from './routes/sales/$saleId'
 import { Route as IntakeNewRouteImport } from './routes/intake/new'
 import { Route as ContactsContactIdRouteImport } from './routes/contacts.$contactId'
 
@@ -91,6 +96,11 @@ const ContactsRoute = ContactsRouteImport.update({
   path: '/contacts',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PurchasesRoute = PurchasesRouteImport.update({
+  id: '/purchases',
+  path: '/purchases',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminTripsRoute = AdminTripsRouteImport.update({
   id: '/admin-trips',
   path: '/admin-trips',
@@ -106,10 +116,25 @@ const TripsIndexRoute = TripsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => TripsRoute,
 } as any)
+const SalesIndexRoute = SalesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SalesRoute,
+} as any)
 const ContactsIndexRoute = ContactsIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => ContactsRoute,
+} as any)
+const PurchasesIndexRoute = PurchasesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PurchasesRoute,
+} as any)
+const PurchasesPurchaseIdRoute = PurchasesPurchaseIdRouteImport.update({
+  id: '/$purchaseId',
+  path: '/$purchaseId',
+  getParentRoute: () => PurchasesRoute,
 } as any)
 const TripsNewRoute = TripsNewRouteImport.update({
   id: '/new',
@@ -124,6 +149,11 @@ const TripsTripIdRoute = TripsTripIdRouteImport.update({
 const SalesNewRoute = SalesNewRouteImport.update({
   id: '/new',
   path: '/new',
+  getParentRoute: () => SalesRoute,
+} as any)
+const SalesSaleIdRoute = SalesSaleIdRouteImport.update({
+  id: '/$saleId',
+  path: '/$saleId',
   getParentRoute: () => SalesRoute,
 } as any)
 const IntakeNewRoute = IntakeNewRouteImport.update({
@@ -148,16 +178,21 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/more': typeof MoreRoute
   '/products': typeof ProductsRoute
+  '/purchases': typeof PurchasesRouteWithChildren
   '/sales': typeof SalesRouteWithChildren
   '/setup': typeof SetupRoute
   '/trips': typeof TripsRouteWithChildren
   '/users': typeof UsersRoute
   '/contacts/$contactId': typeof ContactsContactIdRoute
   '/intake/new': typeof IntakeNewRoute
+  '/purchases/$purchaseId': typeof PurchasesPurchaseIdRoute
+  '/sales/$saleId': typeof SalesSaleIdRoute
   '/sales/new': typeof SalesNewRoute
   '/trips/$tripId': typeof TripsTripIdRoute
   '/trips/new': typeof TripsNewRoute
   '/contacts/': typeof ContactsIndexRoute
+  '/purchases/': typeof PurchasesIndexRoute
+  '/sales/': typeof SalesIndexRoute
   '/trips/': typeof TripsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -170,15 +205,18 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/more': typeof MoreRoute
   '/products': typeof ProductsRoute
-  '/sales': typeof SalesRouteWithChildren
   '/setup': typeof SetupRoute
   '/users': typeof UsersRoute
   '/contacts/$contactId': typeof ContactsContactIdRoute
   '/intake/new': typeof IntakeNewRoute
+  '/purchases/$purchaseId': typeof PurchasesPurchaseIdRoute
+  '/sales/$saleId': typeof SalesSaleIdRoute
   '/sales/new': typeof SalesNewRoute
   '/trips/$tripId': typeof TripsTripIdRoute
   '/trips/new': typeof TripsNewRoute
   '/contacts': typeof ContactsIndexRoute
+  '/purchases': typeof PurchasesIndexRoute
+  '/sales': typeof SalesIndexRoute
   '/trips': typeof TripsIndexRoute
 }
 export interface FileRoutesById {
@@ -193,16 +231,21 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/more': typeof MoreRoute
   '/products': typeof ProductsRoute
+  '/purchases': typeof PurchasesRouteWithChildren
   '/sales': typeof SalesRouteWithChildren
   '/setup': typeof SetupRoute
   '/trips': typeof TripsRouteWithChildren
   '/users': typeof UsersRoute
   '/contacts/$contactId': typeof ContactsContactIdRoute
   '/intake/new': typeof IntakeNewRoute
+  '/purchases/$purchaseId': typeof PurchasesPurchaseIdRoute
+  '/sales/$saleId': typeof SalesSaleIdRoute
   '/sales/new': typeof SalesNewRoute
   '/trips/$tripId': typeof TripsTripIdRoute
   '/trips/new': typeof TripsNewRoute
   '/contacts/': typeof ContactsIndexRoute
+  '/purchases/': typeof PurchasesIndexRoute
+  '/sales/': typeof SalesIndexRoute
   '/trips/': typeof TripsIndexRoute
 }
 export interface FileRouteTypes {
@@ -218,16 +261,21 @@ export interface FileRouteTypes {
     | '/login'
     | '/more'
     | '/products'
+    | '/purchases'
     | '/sales'
     | '/setup'
     | '/trips'
     | '/users'
     | '/contacts/$contactId'
     | '/intake/new'
+    | '/purchases/$purchaseId'
+    | '/sales/$saleId'
     | '/sales/new'
     | '/trips/$tripId'
     | '/trips/new'
     | '/contacts/'
+    | '/purchases/'
+    | '/sales/'
     | '/trips/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -240,15 +288,18 @@ export interface FileRouteTypes {
     | '/login'
     | '/more'
     | '/products'
-    | '/sales'
     | '/setup'
     | '/users'
     | '/contacts/$contactId'
     | '/intake/new'
+    | '/purchases/$purchaseId'
+    | '/sales/$saleId'
     | '/sales/new'
     | '/trips/$tripId'
     | '/trips/new'
     | '/contacts'
+    | '/purchases'
+    | '/sales'
     | '/trips'
   id:
     | '__root__'
@@ -262,16 +313,21 @@ export interface FileRouteTypes {
     | '/login'
     | '/more'
     | '/products'
+    | '/purchases'
     | '/sales'
     | '/setup'
     | '/trips'
     | '/users'
     | '/contacts/$contactId'
     | '/intake/new'
+    | '/purchases/$purchaseId'
+    | '/sales/$saleId'
     | '/sales/new'
     | '/trips/$tripId'
     | '/trips/new'
     | '/contacts/'
+    | '/purchases/'
+    | '/sales/'
     | '/trips/'
   fileRoutesById: FileRoutesById
 }
@@ -286,6 +342,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   MoreRoute: typeof MoreRoute
   ProductsRoute: typeof ProductsRoute
+  PurchasesRoute: typeof PurchasesRouteWithChildren
   SalesRoute: typeof SalesRouteWithChildren
   SetupRoute: typeof SetupRoute
   TripsRoute: typeof TripsRouteWithChildren
@@ -327,6 +384,13 @@ declare module '@tanstack/react-router' {
       path: '/products'
       fullPath: '/products'
       preLoaderRoute: typeof ProductsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/purchases': {
+      id: '/purchases'
+      path: '/purchases'
+      fullPath: '/purchases'
+      preLoaderRoute: typeof PurchasesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/more': {
@@ -399,12 +463,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TripsIndexRouteImport
       parentRoute: typeof TripsRoute
     }
+    '/sales/': {
+      id: '/sales/'
+      path: '/'
+      fullPath: '/sales/'
+      preLoaderRoute: typeof SalesIndexRouteImport
+      parentRoute: typeof SalesRoute
+    }
     '/contacts/': {
       id: '/contacts/'
       path: '/'
       fullPath: '/contacts/'
       preLoaderRoute: typeof ContactsIndexRouteImport
       parentRoute: typeof ContactsRoute
+    }
+    '/purchases/': {
+      id: '/purchases/'
+      path: '/'
+      fullPath: '/purchases/'
+      preLoaderRoute: typeof PurchasesIndexRouteImport
+      parentRoute: typeof PurchasesRoute
+    }
+    '/purchases/$purchaseId': {
+      id: '/purchases/$purchaseId'
+      path: '/$purchaseId'
+      fullPath: '/purchases/$purchaseId'
+      preLoaderRoute: typeof PurchasesPurchaseIdRouteImport
+      parentRoute: typeof PurchasesRoute
     }
     '/trips/new': {
       id: '/trips/new'
@@ -425,6 +510,13 @@ declare module '@tanstack/react-router' {
       path: '/new'
       fullPath: '/sales/new'
       preLoaderRoute: typeof SalesNewRouteImport
+      parentRoute: typeof SalesRoute
+    }
+    '/sales/$saleId': {
+      id: '/sales/$saleId'
+      path: '/$saleId'
+      fullPath: '/sales/$saleId'
+      preLoaderRoute: typeof SalesSaleIdRouteImport
       parentRoute: typeof SalesRoute
     }
     '/intake/new': {
@@ -470,14 +562,30 @@ const IntakeRouteWithChildren =
   IntakeRoute._addFileChildren(IntakeRouteChildren)
 
 interface SalesRouteChildren {
+  SalesSaleIdRoute: typeof SalesSaleIdRoute
   SalesNewRoute: typeof SalesNewRoute
+  SalesIndexRoute: typeof SalesIndexRoute
 }
 
 const SalesRouteChildren: SalesRouteChildren = {
+  SalesSaleIdRoute: SalesSaleIdRoute,
   SalesNewRoute: SalesNewRoute,
+  SalesIndexRoute: SalesIndexRoute,
 }
 
 const SalesRouteWithChildren = SalesRoute._addFileChildren(SalesRouteChildren)
+
+interface PurchasesRouteChildren {
+  PurchasesPurchaseIdRoute: typeof PurchasesPurchaseIdRoute
+  PurchasesIndexRoute: typeof PurchasesIndexRoute
+}
+
+const PurchasesRouteChildren: PurchasesRouteChildren = {
+  PurchasesPurchaseIdRoute: PurchasesPurchaseIdRoute,
+  PurchasesIndexRoute: PurchasesIndexRoute,
+}
+
+const PurchasesRouteWithChildren = PurchasesRoute._addFileChildren(PurchasesRouteChildren)
 
 interface TripsRouteChildren {
   TripsTripIdRoute: typeof TripsTripIdRoute
@@ -504,6 +612,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   MoreRoute: MoreRoute,
   ProductsRoute: ProductsRoute,
+  PurchasesRoute: PurchasesRouteWithChildren,
   SalesRoute: SalesRouteWithChildren,
   SetupRoute: SetupRoute,
   TripsRoute: TripsRouteWithChildren,
